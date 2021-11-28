@@ -247,7 +247,6 @@ class _PriceScreenState extends State<PriceScreen> {
     int c = 40;
     int d = 40;
     int e = 100;
-    int f = 50;
     int g = 150;
 
     if (_width >= 540 && _height >= 500) {
@@ -263,7 +262,6 @@ class _PriceScreenState extends State<PriceScreen> {
         c = 30;
         d = 40;
         e = 100;
-        f = 50;
         g = 120;
       });
     }
@@ -275,7 +273,6 @@ class _PriceScreenState extends State<PriceScreen> {
         c = 30;
         d = 40;
         e = 100;
-        f = 50;
         g = 120;
       });
     }
@@ -290,7 +287,6 @@ class _PriceScreenState extends State<PriceScreen> {
         c = 60;
         d = 70;
         e = 100;
-        f = 50;
         g = 150;
       });
     }
