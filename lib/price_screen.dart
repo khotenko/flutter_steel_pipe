@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'dart:async' show Future;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PriceScreen extends StatefulWidget {
   @override
@@ -17,6 +18,9 @@ class _PriceScreenState extends State<PriceScreen> {
   var sList = [];
 
   List<Widget> tableRow = [];
+
+  bool mmBold = true;
+  bool inBold = false;
 
   List<Widget> getPickerItems() {
     List<Widget> pickerItems = [];
@@ -36,11 +40,14 @@ class _PriceScreenState extends State<PriceScreen> {
 
   var fontWeightInches = FontWeight.w200;
   var fontWeightMM = FontWeight.w600;
+
   var selectedIndexGlobal = 0;
+  final newUserDefault = SharedPreferences.getInstance();
 
   List<Widget> getSelectedDiameterData(
       int selected, double containerSize, double dividerThickness) {
     var selectedDiameter = currenciesList[selected];
+
     final itemList = sList.where((e) => e['Name'] == selectedDiameter).toList();
     // list of maps with selected diameter
 
@@ -163,18 +170,59 @@ class _PriceScreenState extends State<PriceScreen> {
     });
   }
 
+  Future myFuture;
+
+  final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
+
+  bool doneLoadingJSON = false;
   Future<void> getJSON() async {
     final String response =
         await rootBundle.loadString('assets/actualData.json');
     List<dynamic> data = jsonDecode(response);
     // list of maps
     sList = List<Map<String, dynamic>>.from(data);
+
+    setState(() {
+      doneLoadingJSON = true;
+    });
+
+    return myFuture;
+  }
+
+  Future<void> _getUserData() async {
+    final SharedPreferences prefs = await _prefs;
+    mmBold = prefs.getBool('mmBoldBool') ?? true;
+    inBold = prefs.getBool('inBoldBool') ?? false;
+  }
+
+  Future<void> _setUserPref() async {
+    final SharedPreferences prefs = await _prefs;
+
+    prefs.setBool('mmBoldBool', mmBold);
+    prefs.setBool('inBoldBool', inBold);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    getJSON();
+    _getUserData().whenComplete(() => {
+          setState(() {
+            if (mmBold == true && inBold == false) {
+              fontWeightMM = FontWeight.w600;
+              fontWeightInches = FontWeight.w200;
+            }
+            if (mmBold == false && inBold == true) {
+              fontWeightMM = FontWeight.w200;
+              fontWeightInches = FontWeight.w600;
+            }
+          })
+        });
   }
 
   @override
   Widget build(BuildContext context) {
-    // getDropDownItems();
-
     Brightness lightMode = MediaQuery.of(context).platformBrightness;
 
     if (lightMode == Brightness.light) {}
@@ -222,12 +270,6 @@ class _PriceScreenState extends State<PriceScreen> {
 
     if (_width >= 540) {
       setState(() {
-        // _containerSize = 50;
-        // _headerFont = 17;
-        // _dividerThickness = 15;
-        // _pickerSize = 175;
-        // _pickerInset = 30;
-        // _containerSizeMultiply = 1.5;
         a = 80;
         b = 30;
         c = 30;
@@ -264,186 +306,216 @@ class _PriceScreenState extends State<PriceScreen> {
     }
 
     CupertinoDynamicColor.resolve(CupertinoColors.label, context);
-    getJSON();
+    // getJSON();
 
     return Scaffold(
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: BoxConstraints(maxWidth: 600),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                SizedBox(
-                  height: 25,
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Spacer(
-                      flex: a,
+            child: Builder(builder: (context) {
+              if (doneLoadingJSON == true) {
+                return Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    SizedBox(
+                      height: 25,
                     ),
-                    Container(
-                      width: _containerSize * _containerSizeMultiply * 1.1 + 5,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(10),
-                        onTap: () {
-                          setState(() {
-                            fontWeightInches = FontWeight.w600;
-                            fontWeightMM = FontWeight.w200;
-                            tableRow = [];
-                            getSelectedDiameterData(selectedIndexGlobal,
-                                _containerSize, _dividerThickness);
-                          });
-                        },
-                        child: Center(
-                          child: Text(
-                            'WT inches',
-                            maxLines: 1,
-                            style: TextStyle(
-                              fontSize: _headerFont,
-                              fontWeight: fontWeightInches,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Spacer(
+                          flex: a,
+                        ),
+                        Container(
+                          width:
+                              _containerSize * _containerSizeMultiply * 1.1 + 5,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(10),
+                            onTap: () {
+                              inBold = true;
+                              mmBold = false;
+
+                              setState(() {
+                                _setUserPref();
+                                fontWeightInches = FontWeight.w600;
+                                fontWeightMM = FontWeight.w200;
+                                tableRow = [];
+                                getSelectedDiameterData(selectedIndexGlobal,
+                                    _containerSize, _dividerThickness);
+                              });
+                            },
+                            child: Center(
+                              child: Text(
+                                'WT inches',
+                                maxLines: 1,
+                                style: TextStyle(
+                                  fontSize: _headerFont,
+                                  fontWeight: fontWeightInches,
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ),
-                    Spacer(
-                      flex: b,
-                    ),
-                    Container(
-                      width: _containerSize * _containerSizeMultiply,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(10),
-                        onTap: () {
-                          setState(() {
-                            fontWeightInches = FontWeight.w200;
-                            fontWeightMM = FontWeight.w600;
-                            tableRow = [];
-                            getSelectedDiameterData(selectedIndexGlobal,
-                                _containerSize, _dividerThickness);
-                          });
-                        },
-                        child: Center(
-                          child: Text(
-                            'WT mm',
-                            maxLines: 1,
-                            style: TextStyle(
-                              fontSize: _headerFont,
-                              fontWeight: fontWeightMM,
+                        Spacer(
+                          flex: b,
+                        ),
+                        Container(
+                          width: _containerSize * _containerSizeMultiply,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(10),
+                            onTap: () {
+                              inBold = false;
+                              mmBold = true;
+                              setState(() {
+                                _setUserPref();
+                                fontWeightInches = FontWeight.w200;
+                                fontWeightMM = FontWeight.w600;
+                                tableRow = [];
+                                getSelectedDiameterData(selectedIndexGlobal,
+                                    _containerSize, _dividerThickness);
+                              });
+                            },
+                            child: Center(
+                              child: Text(
+                                'WT mm',
+                                maxLines: 1,
+                                style: TextStyle(
+                                  fontSize: _headerFont,
+                                  fontWeight: fontWeightMM,
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      ),
+                        Spacer(
+                          flex: c,
+                        ),
+                        Container(
+                          width: _containerSize * _containerSizeMultiply,
+                          child: Center(
+                            child: Text(
+                              'lb/ft',
+                              maxLines: 1,
+                              style: TextStyle(
+                                fontSize: _headerFont,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Spacer(
+                          flex: d,
+                        ),
+                        Container(
+                          width: _containerSize * _containerSizeMultiply,
+                          child: Center(
+                            child: Text(
+                              'kg/m',
+                              maxLines: 1,
+                              style: TextStyle(
+                                fontSize: _headerFont,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Spacer(
+                          flex: e,
+                        ),
+                        Container(
+                          width: _containerSize * _containerSizeMultiply,
+                          child: Center(
+                            child: Text(
+                              'Schedule',
+                              maxLines: 1,
+                              style: TextStyle(
+                                fontSize: _headerFont,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Spacer(
+                          flex: g,
+                        ),
+                      ],
                     ),
-                    Spacer(
-                      flex: c,
+                    SizedBox(
+                      height: 10,
+                    ),
+                    Expanded(
+                        child: Scrollbar(
+                      child: CupertinoTheme(
+                        data: CupertinoThemeData(
+                          textTheme: CupertinoTextThemeData(
+                            dateTimePickerTextStyle: TextStyle(),
+                          ),
+                        ),
+                        child: ListView(
+                          children: tableRow,
+                        ),
+                      ),
+                    )),
+                    SizedBox(
+                      height: 10,
                     ),
                     Container(
-                      width: _containerSize * _containerSizeMultiply,
-                      child: Center(
-                        child: Text(
-                          'lb/ft',
-                          maxLines: 1,
-                          style: TextStyle(
-                            fontSize: _headerFont,
+                      height: _pickerSize,
+                      alignment: Alignment.center,
+                      padding: EdgeInsets.only(bottom: _pickerInset),
+                      // color: Colors.lightBlue,
+                      child: CupertinoTheme(
+                        data: CupertinoThemeData(
+                          textTheme: CupertinoTextThemeData(
+                            dateTimePickerTextStyle: TextStyle(
+                                // fontSize: 14,
+                                ),
                           ),
+                        ),
+                        child: CupertinoPicker(
+                          useMagnifier: true,
+                          magnification: 1.1,
+                          itemExtent: _pickerExtent,
+                          onSelectedItemChanged: (selectedIndex) {
+                            selectedIndexGlobal = selectedIndex;
+
+                            tableRow = [];
+                            SystemSound.play(SystemSoundType.click);
+                            HapticFeedback.lightImpact();
+                            getSelectedDiameterData(selectedIndexGlobal,
+                                _containerSize, _dividerThickness);
+                          },
+                          children: getPickerItems(),
                         ),
                       ),
                     ),
-                    Spacer(
-                      flex: d,
-                    ),
-                    Container(
-                      width: _containerSize * _containerSizeMultiply,
-                      child: Center(
-                        child: Text(
-                          'kg/m',
-                          maxLines: 1,
-                          style: TextStyle(
-                            fontSize: _headerFont,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Spacer(
-                      flex: e,
-                    ),
-                    Container(
-                      width: _containerSize * _containerSizeMultiply,
-                      child: Center(
-                        child: Text(
-                          'Schedule',
-                          maxLines: 1,
-                          style: TextStyle(
-                            fontSize: _headerFont,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Spacer(
-                      flex: g,
-                    ),
+                    BottomRow(),
                   ],
-                ),
-                SizedBox(
-                  height: 10,
-                ),
-                Expanded(
-                    child: Scrollbar(
-                  child: CupertinoTheme(
-                    data: CupertinoThemeData(
-                      textTheme: CupertinoTextThemeData(
-                        dateTimePickerTextStyle: TextStyle(
-                            // fontSize: 16,
-                            ),
+                );
+              } else {
+                return Center(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        child: CircularProgressIndicator(
+                          strokeWidth: 1,
+                        ),
+                        width: 30,
+                        height: 30,
                       ),
-                    ),
-                    child: ListView(
-                      children: tableRow,
-                    ),
+                      const Padding(
+                        padding: EdgeInsets.only(top: 16),
+                        child: Text(
+                          'loading...',
+                          style: TextStyle(fontWeight: FontWeight.w200),
+                        ),
+                      )
+                    ],
                   ),
-                )),
-                SizedBox(
-                  height: 10,
-                ),
-                Container(
-                  height: _pickerSize,
-                  alignment: Alignment.center,
-                  padding: EdgeInsets.only(bottom: _pickerInset),
-                  // color: Colors.lightBlue,
-                  child: CupertinoTheme(
-                    data: CupertinoThemeData(
-                      textTheme: CupertinoTextThemeData(
-                        dateTimePickerTextStyle: TextStyle(
-                            // fontSize: 14,
-                            ),
-                      ),
-                    ),
-                    child: CupertinoPicker(
-                      useMagnifier: true,
-                      magnification: 1.1,
-                      // backgroundColor: Colors.white,
-                      itemExtent: _pickerExtent,
-                      onSelectedItemChanged: (selectedIndex) {
-                        selectedIndexGlobal = selectedIndex;
-
-                        tableRow = [];
-                        SystemSound.play(SystemSoundType.click);
-                        HapticFeedback.lightImpact();
-                        getSelectedDiameterData(selectedIndexGlobal,
-                            _containerSize, _dividerThickness);
-
-                        //print(selectedIndex);
-                      },
-                      children: getPickerItems(),
-                    ),
-                  ),
-                ),
-                BottomRow(),
-              ],
-            ),
+                );
+              }
+            }),
           ),
         ),
       ),
