@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'coin_data.dart';
+import 'pipe_data.dart';
 import 'dart:convert';
 import 'dart:async' show Future;
 import 'package:flutter/services.dart' show rootBundle;
@@ -44,7 +44,7 @@ class _PriceScreenState extends State<PriceScreen> {
   var selectedIndexGlobal = 0;
   final newUserDefault = SharedPreferences.getInstance();
 
-  List<Widget> getSelectedDiameterData(
+  getSelectedDiameterData(
       int selected, double containerSize, double dividerThickness) {
     var selectedDiameter = currenciesList[selected];
 
