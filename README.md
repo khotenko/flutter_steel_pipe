@@ -6,11 +6,6 @@ A Flutter application that has a Cupertino Picker and ListView for results of NP
 
 Includes - splash screen, light and dark mode, adaptive (screen size) and responsive widget (running on web vs mobile), spinner while data is being loaded, url launcher, shared/saved user preferences.  
 
-
-
-
-
-
-
-
 On web, app shows links to app stores only if screen is large enough:
+
+![](readme_web.gif)
