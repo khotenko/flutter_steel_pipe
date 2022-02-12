@@ -5,9 +5,9 @@ import 'package:flutter/services.dart';
 import 'pipe_data.dart';
 import 'dart:convert';
 import 'dart:async' show Future;
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io';
 
 class PriceScreen extends StatefulWidget {
   @override
@@ -22,10 +22,14 @@ class _PriceScreenState extends State<PriceScreen> {
   bool mmBold = true;
   bool inBold = false;
 
+  List<String> diam = [];
+
   List<Widget> getPickerItems() {
     List<Widget> pickerItems = [];
 
     for (String diameter in currenciesList) {
+      diam.add(diameter);
+
       pickerItems.add(
         Center(
           child: Text(
@@ -175,6 +179,11 @@ class _PriceScreenState extends State<PriceScreen> {
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
 
   bool doneLoadingJSON = false;
+
+  bool webPlatform = false;
+  bool androidPlatform = false;
+  bool windowsPlatform = false;
+
   Future<void> getJSON() async {
     final String response =
         await rootBundle.loadString('assets/actualData.json');
@@ -202,9 +211,34 @@ class _PriceScreenState extends State<PriceScreen> {
     prefs.setBool('inBoldBool', inBold);
   }
 
+  ScrollController _scrollController;
+
   @override
   void initState() {
     super.initState();
+
+    _scrollController = ScrollController();
+
+    try {
+      if (Platform.isAndroid) {
+        androidPlatform = true;
+      }
+      if (Platform.isWindows) {
+        windowsPlatform = true;
+      }
+    } on UnsupportedError catch (_) {
+      if (kIsWeb) {
+        webPlatform = true;
+      } else {
+        print('error');
+      }
+    }
+
+    print(androidPlatform);
+    print(windowsPlatform);
+    print(webPlatform);
+
+    getPickerItems();
 
     getJSON();
     _getUserData().whenComplete(() => {
@@ -439,51 +473,134 @@ class _PriceScreenState extends State<PriceScreen> {
                       height: 10,
                     ),
                     Expanded(
-                        child: Scrollbar(
-                      child: CupertinoTheme(
-                        data: CupertinoThemeData(
-                          textTheme: CupertinoTextThemeData(
-                            dateTimePickerTextStyle: TextStyle(),
+                      child: Scrollbar(
+                        child: CupertinoTheme(
+                          data: CupertinoThemeData(
+                            textTheme: CupertinoTextThemeData(
+                              dateTimePickerTextStyle: TextStyle(),
+                            ),
+                          ),
+                          child: ListView(
+                            children: tableRow,
                           ),
                         ),
-                        child: ListView(
-                          children: tableRow,
-                        ),
                       ),
-                    )),
+                    ),
                     SizedBox(
                       height: 10,
                     ),
-                    Container(
-                      height: _pickerSize,
-                      alignment: Alignment.center,
-                      padding: EdgeInsets.only(bottom: _pickerInset),
-                      // color: Colors.lightBlue,
-                      child: CupertinoTheme(
-                        data: CupertinoThemeData(
-                          textTheme: CupertinoTextThemeData(
-                            dateTimePickerTextStyle: TextStyle(
-                                // fontSize: 14,
-                                ),
+                    if (androidPlatform)
+                      Container(
+                        height: _pickerSize,
+                        alignment: Alignment.center,
+                        padding: EdgeInsets.only(bottom: _pickerInset),
+                        // child: Scrollbar(
+                        //   controller: _scrollController,
+                        //   isAlwaysShown: true,
+                        //   child: ListView.builder(
+                        //       controller: _scrollController,
+                        //       itemCount: diam.length,
+                        //       itemBuilder: (context, index) {
+                        //         return ListTile(
+                        //           selected: (selectedIndexGlobal == index),
+                        //           onTap: () {
+                        //             selectedIndexGlobal = index;
+                        //
+                        //             tableRow = [];
+                        //             SystemSound.play(SystemSoundType.click);
+                        //             HapticFeedback.lightImpact();
+                        //             getSelectedDiameterData(selectedIndexGlobal,
+                        //                 _containerSize, _dividerThickness);
+                        //           },
+                        //           title: Text(
+                        //             diam[index].toString(),
+                        //             textAlign: TextAlign.center,
+                        //           ),
+                        //         );
+                        //       }),
+                        // ),
+
+                        child: CupertinoTheme(
+                          data: CupertinoThemeData(
+                            textTheme: CupertinoTextThemeData(
+                              dateTimePickerTextStyle: TextStyle(
+                                  // fontSize: 14,
+                                  ),
+                            ),
+                          ),
+                          child: CupertinoPicker(
+                            useMagnifier: true,
+                            magnification: 1.1,
+                            itemExtent: _pickerExtent,
+                            onSelectedItemChanged: (selectedIndex) {
+                              selectedIndexGlobal = selectedIndex;
+
+                              tableRow = [];
+                              SystemSound.play(SystemSoundType.click);
+                              HapticFeedback.lightImpact();
+                              getSelectedDiameterData(selectedIndexGlobal,
+                                  _containerSize, _dividerThickness);
+                            },
+                            children: getPickerItems(),
                           ),
                         ),
-                        child: CupertinoPicker(
-                          useMagnifier: true,
-                          magnification: 1.1,
-                          itemExtent: _pickerExtent,
-                          onSelectedItemChanged: (selectedIndex) {
-                            selectedIndexGlobal = selectedIndex;
-
-                            tableRow = [];
-                            SystemSound.play(SystemSoundType.click);
-                            HapticFeedback.lightImpact();
-                            getSelectedDiameterData(selectedIndexGlobal,
-                                _containerSize, _dividerThickness);
-                          },
-                          children: getPickerItems(),
-                        ),
                       ),
-                    ),
+                    if (webPlatform || windowsPlatform)
+                      Container(
+                        height: _pickerSize,
+                        alignment: Alignment.center,
+                        padding: EdgeInsets.only(bottom: _pickerInset),
+                        child: Scrollbar(
+                          controller: _scrollController,
+                          isAlwaysShown: true,
+                          child: ListView.builder(
+                              controller: _scrollController,
+                              itemCount: diam.length,
+                              itemBuilder: (context, index) {
+                                return ListTile(
+                                  selected: (selectedIndexGlobal == index),
+                                  onTap: () {
+                                    selectedIndexGlobal = index;
+
+                                    tableRow = [];
+                                    SystemSound.play(SystemSoundType.click);
+                                    HapticFeedback.lightImpact();
+                                    getSelectedDiameterData(selectedIndexGlobal,
+                                        _containerSize, _dividerThickness);
+                                  },
+                                  title: Text(
+                                    diam[index].toString(),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                );
+                              }),
+                        ),
+
+                        // child: CupertinoTheme(
+                        //   data: CupertinoThemeData(
+                        //     textTheme: CupertinoTextThemeData(
+                        //       dateTimePickerTextStyle: TextStyle(
+                        //           // fontSize: 14,
+                        //           ),
+                        //     ),
+                        //   ),
+                        //   child: CupertinoPicker(
+                        //     useMagnifier: true,
+                        //     magnification: 1.1,
+                        //     itemExtent: _pickerExtent,
+                        //     onSelectedItemChanged: (selectedIndex) {
+                        //       selectedIndexGlobal = selectedIndex;
+                        //
+                        //       tableRow = [];
+                        //       SystemSound.play(SystemSoundType.click);
+                        //       HapticFeedback.lightImpact();
+                        //       getSelectedDiameterData(selectedIndexGlobal,
+                        //           _containerSize, _dividerThickness);
+                        //     },
+                        //     children: getPickerItems(),
+                        //   ),
+                        // ),
+                      ),
                     BottomRow(),
                   ],
                 );
@@ -524,6 +641,16 @@ class BottomRow extends StatelessWidget {
     Key key,
   }) : super(key: key);
 
+  _launchURLMS() async {
+    const url =
+        'https://www.microsoft.com/en-ca/p/unit-converter-convert-units/9PH4SN4SQ71D';
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
+
   _launchURLGoogle() async {
     const url =
         'https://play.google.com/store/apps/details?id=com.khotenko.steel_pipe';
@@ -546,8 +673,8 @@ class BottomRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Brightness lightMode = MediaQuery.of(context).platformBrightness;
-    double _height = MediaQuery.of(context).size.height;
-    double _width = MediaQuery.of(context).size.width;
+    // double _height = MediaQuery.of(context).size.height;
+    // double _width = MediaQuery.of(context).size.width;
 
     String appleStoreImage = '';
     if (lightMode == Brightness.light) {
@@ -559,42 +686,70 @@ class BottomRow extends StatelessWidget {
           'assets/storeLogos/Download_on_the_App_Store_Badge_US-UK_blk_092917.png';
     }
 
-    if (kIsWeb && _width >= 700 && _height >= 900) {
+    if (kIsWeb) {
+      //&& _width >= 700 && _height >= 900
       // running on the web!
       //_pickerInset = 15;
 
       return Row(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(10),
-              onTap: () {
-                print('hello');
-                _launchURLApple();
-              },
-              child: Container(
+          Expanded(
+            flex: 1,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: () {
+                  print('hello');
+                  _launchURLApple();
+                },
                 child: Container(
-                  constraints: BoxConstraints(
-                    maxHeight: 40,
+                  child: Container(
+                    constraints: BoxConstraints(
+                      maxHeight: 40,
+                    ),
+                    child: Image.asset(appleStoreImage),
                   ),
-                  child: Image.asset(appleStoreImage),
                 ),
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(10),
-              onTap: () {
-                _launchURLGoogle();
-              },
-              child: Container(
-                constraints: BoxConstraints(
-                  maxHeight: 55,
+          Expanded(
+            flex: 1,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: () {
+                  _launchURLGoogle();
+                },
+                child: Container(
+                  constraints: BoxConstraints(
+                    maxHeight: 55,
+                  ),
+                  child: Image.asset('assets/storeLogos/google-play-badge.png'),
                 ),
-                child: Image.asset('assets/storeLogos/google-play-badge.png'),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: () {
+                  _launchURLMS();
+                },
+                child: Container(
+                  constraints: BoxConstraints(
+                    maxHeight: 55,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Image.asset('assets/storeLogos/MS.png'),
+                  ),
+                ),
               ),
             ),
           ),
