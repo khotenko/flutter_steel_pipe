@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +10,8 @@ import 'dart:async' show Future;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
+
+import 'package:rate_my_app/rate_my_app.dart';
 
 class PriceScreen extends StatefulWidget {
   @override
@@ -46,6 +50,8 @@ class _PriceScreenState extends State<PriceScreen> {
   var fontWeightMM = FontWeight.w600;
 
   var selectedIndexGlobal = 0;
+
+  var scrollCount = 0;
   final newUserDefault = SharedPreferences.getInstance();
 
   getSelectedDiameterData(
@@ -202,6 +208,52 @@ class _PriceScreenState extends State<PriceScreen> {
     final SharedPreferences prefs = await _prefs;
     mmBold = prefs.getBool('mmBoldBool') ?? true;
     inBold = prefs.getBool('inBoldBool') ?? false;
+
+    scrollCount = prefs.getInt('scrollCount') ?? 0;
+
+    print(scrollCount);
+
+    if (scrollCount > 10) {
+      rateMyApp.init().then((_) {
+        if (rateMyApp.shouldOpenDialog) {
+          rateMyApp.showRateDialog(
+            context,
+            title: 'Rate this app', // The dialog title.
+            message:
+                'If this app is useful, please consider supporting by rating - it really helps! Thank you.', // The dialog message.
+            rateButton: 'RATE', // The dialog "rate" button text.
+            noButton: 'No thanks', // The dialog "no" button text.
+            laterButton: 'Maybe later', // The dialog "later" button text.
+            listener: (button) {
+              // The button click listener (useful if you want to cancel the click event).
+              switch (button) {
+                case RateMyAppDialogButton.rate:
+                  print('Clicked on "Rate".');
+                  break;
+                case RateMyAppDialogButton.later:
+                  print('Clicked on "Later".');
+                  break;
+                case RateMyAppDialogButton.no:
+                  print('Clicked on "No".');
+                  break;
+              }
+
+              return true; // Return false if you want to cancel the click event.
+            },
+            ignoreNativeDialog: Platform
+                .isAndroid, // Set to false if you want to show the Apple's native app rating dialog on iOS or Google's native app rating dialog (depends on the current Platform).
+            dialogStyle: const DialogStyle(), // Custom dialog styles.
+            onDismissed: () => rateMyApp.callEvent(RateMyAppEventType
+                .laterButtonPressed), // Called when the user dismissed the dialog (either by taping outside or by pressing the "back" button).
+            // contentBuilder: (context, defaultContent) => content, // This one allows you to change the default dialog content.
+            // actionsBuilder: (context) => [], // This one allows you to use your own buttons.
+          );
+
+          // Or if you prefer to show a star rating bar (powered by `flutter_rating_bar`) :
+
+        }
+      });
+    }
   }
 
   Future<void> _setUserPref() async {
@@ -211,7 +263,22 @@ class _PriceScreenState extends State<PriceScreen> {
     prefs.setBool('inBoldBool', inBold);
   }
 
+  Future<void> _setScrollCount() async {
+    final SharedPreferences prefs = await _prefs;
+
+    prefs.setInt('scrollCount', scrollCount);
+  }
+
   ScrollController _scrollController;
+
+  RateMyApp rateMyApp = RateMyApp(
+    preferencesPrefix: 'rateMyApp_',
+    minDays: 3,
+    minLaunches: 3,
+    remindDays: 3,
+    remindLaunches: 3,
+    googlePlayIdentifier: 'com.khotenko.steel_pipe',
+  );
 
   @override
   void initState() {
@@ -234,13 +301,9 @@ class _PriceScreenState extends State<PriceScreen> {
       }
     }
 
-    print(androidPlatform);
-    print(windowsPlatform);
-    print(webPlatform);
-
     getPickerItems();
-
     getJSON();
+
     _getUserData().whenComplete(() => {
           setState(() {
             if (mmBold == true && inBold == false) {
@@ -494,32 +557,6 @@ class _PriceScreenState extends State<PriceScreen> {
                         height: _pickerSize,
                         alignment: Alignment.center,
                         padding: EdgeInsets.only(bottom: _pickerInset),
-                        // child: Scrollbar(
-                        //   controller: _scrollController,
-                        //   isAlwaysShown: true,
-                        //   child: ListView.builder(
-                        //       controller: _scrollController,
-                        //       itemCount: diam.length,
-                        //       itemBuilder: (context, index) {
-                        //         return ListTile(
-                        //           selected: (selectedIndexGlobal == index),
-                        //           onTap: () {
-                        //             selectedIndexGlobal = index;
-                        //
-                        //             tableRow = [];
-                        //             SystemSound.play(SystemSoundType.click);
-                        //             HapticFeedback.lightImpact();
-                        //             getSelectedDiameterData(selectedIndexGlobal,
-                        //                 _containerSize, _dividerThickness);
-                        //           },
-                        //           title: Text(
-                        //             diam[index].toString(),
-                        //             textAlign: TextAlign.center,
-                        //           ),
-                        //         );
-                        //       }),
-                        // ),
-
                         child: CupertinoTheme(
                           data: CupertinoThemeData(
                             textTheme: CupertinoTextThemeData(
@@ -533,6 +570,12 @@ class _PriceScreenState extends State<PriceScreen> {
                             magnification: 1.1,
                             itemExtent: _pickerExtent,
                             onSelectedItemChanged: (selectedIndex) {
+                              scrollCount = scrollCount + 1;
+
+                              _setScrollCount();
+
+                              print(scrollCount);
+
                               selectedIndexGlobal = selectedIndex;
 
                               tableRow = [];
@@ -552,7 +595,7 @@ class _PriceScreenState extends State<PriceScreen> {
                         padding: EdgeInsets.only(bottom: _pickerInset),
                         child: Scrollbar(
                           controller: _scrollController,
-                          isAlwaysShown: true,
+                          thumbVisibility: true,
                           child: ListView.builder(
                               controller: _scrollController,
                               itemCount: diam.length,
@@ -575,31 +618,6 @@ class _PriceScreenState extends State<PriceScreen> {
                                 );
                               }),
                         ),
-
-                        // child: CupertinoTheme(
-                        //   data: CupertinoThemeData(
-                        //     textTheme: CupertinoTextThemeData(
-                        //       dateTimePickerTextStyle: TextStyle(
-                        //           // fontSize: 14,
-                        //           ),
-                        //     ),
-                        //   ),
-                        //   child: CupertinoPicker(
-                        //     useMagnifier: true,
-                        //     magnification: 1.1,
-                        //     itemExtent: _pickerExtent,
-                        //     onSelectedItemChanged: (selectedIndex) {
-                        //       selectedIndexGlobal = selectedIndex;
-                        //
-                        //       tableRow = [];
-                        //       SystemSound.play(SystemSoundType.click);
-                        //       HapticFeedback.lightImpact();
-                        //       getSelectedDiameterData(selectedIndexGlobal,
-                        //           _containerSize, _dividerThickness);
-                        //     },
-                        //     children: getPickerItems(),
-                        //   ),
-                        // ),
                       ),
                     BottomRow(),
                   ],
@@ -642,29 +660,46 @@ class BottomRow extends StatelessWidget {
   }) : super(key: key);
 
   _launchURLMS() async {
-    const url =
-        'https://www.microsoft.com/en-ca/p/unit-converter-convert-units/9PH4SN4SQ71D';
-    if (await canLaunch(url)) {
-      await launch(url);
+    final url = 'https://www.microsoft.com/store/apps/9PH4SN4SQ71D';
+
+    final MSUri = Uri(
+        scheme: 'https',
+        host: 'www.microsoft.com',
+        path: '/store/apps/9PH4SN4SQ71D');
+
+    if (await canLaunchUrl(MSUri)) {
+      await launchUrl(MSUri);
     } else {
       throw 'Could not launch $url';
     }
   }
 
   _launchURLGoogle() async {
-    const url =
+    final url =
         'https://play.google.com/store/apps/details?id=com.khotenko.steel_pipe';
-    if (await canLaunch(url)) {
-      await launch(url);
+
+    final GoggleUri = Uri(
+        scheme: 'https',
+        host: 'play.google.com',
+        path: '/store/apps/details?id=com.khotenko.steel_pipe');
+
+    if (await canLaunchUrl(GoggleUri)) {
+      await launchUrl(GoggleUri);
     } else {
       throw 'Could not launch $url';
     }
   }
 
   _launchURLApple() async {
-    const url = 'https://apps.apple.com/us/app/steel-pipe/id1517543497';
-    if (await canLaunch(url)) {
-      await launch(url);
+    final url = 'https://apps.apple.com/us/app/steel-pipe/id1517543497';
+
+    final AppleUri = Uri(
+        scheme: 'https',
+        host: 'apps.apple.com',
+        path: '/store/apps/details?id=com.khotenko.steel_pipe');
+
+    if (await canLaunchUrl(AppleUri)) {
+      await launchUrl(AppleUri);
     } else {
       throw 'Could not launch $url';
     }
@@ -673,8 +708,6 @@ class BottomRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Brightness lightMode = MediaQuery.of(context).platformBrightness;
-    // double _height = MediaQuery.of(context).size.height;
-    // double _width = MediaQuery.of(context).size.width;
 
     String appleStoreImage = '';
     if (lightMode == Brightness.light) {
@@ -687,10 +720,6 @@ class BottomRow extends StatelessWidget {
     }
 
     if (kIsWeb) {
-      //&& _width >= 700 && _height >= 900
-      // running on the web!
-      //_pickerInset = 15;
-
       return Row(
         children: [
           Expanded(
@@ -700,7 +729,6 @@ class BottomRow extends StatelessWidget {
               child: InkWell(
                 borderRadius: BorderRadius.circular(10),
                 onTap: () {
-                  print('hello');
                   _launchURLApple();
                 },
                 child: Container(

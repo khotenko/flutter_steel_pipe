@@ -1,5 +1,5 @@
 name: steel_pipe
-description: A new Flutter application.
+description: Steel Pipe.
 
 # The following line prevents the package from being accidentally published to
 # pub.dev using `pub publish`. This is preferred for private packages.
@@ -15,7 +15,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 5.0.1+7
+version: 5.1.1+8
 
 environment:
   sdk: ">=2.7.0 <3.0.0"
@@ -32,7 +32,9 @@ dependencies:
   url_launcher: ^6.0.15
   shared_preferences: ^2.0.9
   flutter_native_splash: ^2.0.2
+  rate_my_app: ^1.1.3
   html: ^0.15.0
+  msix: ^3.6.2
 
 flutter_native_splash:
   color: "#ffffff"
@@ -42,6 +44,16 @@ flutter_native_splash:
   android: true
   web: false
 
+msix_config:
+  display_name: Steel Pipe
+  publisher_display_name: Nick Khotenko
+  identity_name: 25559NickKhotenko.SteelPipe
+  msix_version: 2.0.0.0
+  publisher: CN=2364074C-7466-4D04-9E55-E1887D22F017
+  logo_path: ./logo/256.png
+  icons_background_color: "#ffffff"
+  store: true
+  capabilities: "internetClient"
 
 dev_dependencies:
   flutter_test:
