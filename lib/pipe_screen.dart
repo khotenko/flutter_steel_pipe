@@ -660,12 +660,13 @@ class BottomRow extends StatelessWidget {
   }) : super(key: key);
 
   _launchURLMS() async {
-    final url = 'https://www.microsoft.com/store/apps/9PH4SN4SQ71D';
+    final url =
+        'https://apps.microsoft.com/store/detail/steel-pipe/9PH4SN4SQ71D';
 
     final MSUri = Uri(
         scheme: 'https',
-        host: 'www.microsoft.com',
-        path: '/store/apps/9PH4SN4SQ71D');
+        host: 'apps.microsoft.com',
+        path: '/store/detail/steel-pipe/9PH4SN4SQ71D');
 
     if (await canLaunchUrl(MSUri)) {
       await launchUrl(MSUri);
@@ -681,7 +682,8 @@ class BottomRow extends StatelessWidget {
     final GoggleUri = Uri(
         scheme: 'https',
         host: 'play.google.com',
-        path: '/store/apps/details?id=com.khotenko.steel_pipe');
+        path: '/store/apps/details',
+        queryParameters: {'id': 'com.khotenko.steel_pipe'});
 
     if (await canLaunchUrl(GoggleUri)) {
       await launchUrl(GoggleUri);
@@ -691,12 +693,12 @@ class BottomRow extends StatelessWidget {
   }
 
   _launchURLApple() async {
-    final url = 'https://apps.apple.com/us/app/steel-pipe/id1517543497';
+    final url = 'https://apps.apple.com/ca/app/steel-pipe/id1517543497';
 
     final AppleUri = Uri(
         scheme: 'https',
         host: 'apps.apple.com',
-        path: '/store/apps/details?id=com.khotenko.steel_pipe');
+        path: '/ca/app/steel-pipe/id1517543497');
 
     if (await canLaunchUrl(AppleUri)) {
       await launchUrl(AppleUri);
