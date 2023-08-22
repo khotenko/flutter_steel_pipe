@@ -19,7 +19,7 @@ class _PriceScreenState extends State<PriceScreen> {
   var sList = [];
 
 
-  final ValueNotifier<int> _selectedOD = ValueNotifier<int>(0);
+  ValueNotifier<int> _selectedOD = ValueNotifier<int>(0);
 
 
   List<Widget> tableRow = [];
@@ -71,13 +71,13 @@ class _PriceScreenState extends State<PriceScreen> {
 
 
 
-  List<dynamic> wantedODInfo = [];
+   List<dynamic> wantedODInfo = [];
 
   List<Widget> getPickerItems() {
     List<Widget> pickerItems = [];
 
     for (String diameter in diam) {
-      diam.add(diameter);
+     // diam.add(diameter);
 
       pickerItems.add(
         Center(
@@ -107,9 +107,9 @@ class _PriceScreenState extends State<PriceScreen> {
   bool androidPlatform = false;
   bool windowsPlatform = false;
 
-   getJSON() async {
+  getJSON() async {
     final String response =
-        await rootBundle.loadString('assets/actualData.json');
+    await rootBundle.loadString('assets/actualData.json');
     List<dynamic> data = jsonDecode(response);
 
     sList = List<Map<String, dynamic>>.from(data);
@@ -137,7 +137,7 @@ class _PriceScreenState extends State<PriceScreen> {
             context,
             title: 'Rate this app', // The dialog title.
             message:
-                'If this app is useful, please consider supporting by rating - it really helps! Thank you.', // The dialog message.
+            'If this app is useful, please consider supporting by rating - it really helps! Thank you.', // The dialog message.
             rateButton: 'RATE', // The dialog "rate" button text.
             noButton: 'No thanks', // The dialog "no" button text.
             laterButton: 'Maybe later', // The dialog "later" button text.
@@ -217,17 +217,17 @@ class _PriceScreenState extends State<PriceScreen> {
     getJSON();
 
     _getUserData().whenComplete(()  {
-          setState(() {
-            if (mmBold == true && inBold == false) {
-              fontWeightMM = FontWeight.w600;
-              fontWeightInches = FontWeight.w200;
-            }
-            if (mmBold == false && inBold == true) {
-              fontWeightMM = FontWeight.w200;
-              fontWeightInches = FontWeight.w600;
-            }
-          });
-        });
+      setState(() {
+        if (mmBold == true && inBold == false) {
+          fontWeightMM = FontWeight.w600;
+          fontWeightInches = FontWeight.w200;
+        }
+        if (mmBold == false && inBold == true) {
+          fontWeightMM = FontWeight.w200;
+          fontWeightInches = FontWeight.w600;
+        }
+      });
+    });
   }
 
   @override
@@ -337,7 +337,7 @@ class _PriceScreenState extends State<PriceScreen> {
                         ),
                         Container(
                           width:
-                              _containerSize * _containerSizeMultiply * 1.1 + 5,
+                          _containerSize * _containerSizeMultiply * 1.1 + 5,
                           child: InkWell(
                             borderRadius: BorderRadius.circular(10),
                             onTap: () {
@@ -447,222 +447,222 @@ class _PriceScreenState extends State<PriceScreen> {
                     SizedBox(
                       height: 10,
                     ),
-    Expanded(
-      child: ValueListenableBuilder<int>(
-      valueListenable: _selectedOD,
-      builder: (context, value, child) {
-        wantedODInfo = sList.where((e) => e['Name'] == diam[value]).toList();
+                    Expanded(
+                      child: ValueListenableBuilder<int>(
+                          valueListenable: _selectedOD,
+                          builder: (context, value, child) {
+                            wantedODInfo = sList.where((e) => e['Name'] == diam[value]).toList();
 
-        return Column(children: [
-          Expanded(
-            child: ListView.builder(
-              itemCount: wantedODInfo.length,
+                            return Column(children: [
+                              Expanded(
+                                child: ListView.builder(
+                                  itemCount: wantedODInfo.length,
 
-              itemBuilder: (context, i) {
-                return Column(
-                  children: [
-                    SizedBox(
-                      height: 2,
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Spacer(
-                          flex: 100,
-                        ),
-                        Container(
-                          width: _containerSize,
-                          child: Center(
-                            child: SelectableText(
-                              wantedODInfo[i]['WT_inch'].toStringAsFixed(3),
-                              style: TextStyle(
-                                fontWeight: fontWeightInches,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Spacer(
-                          flex: 70,
-                        ),
-                        Container(
-                          width: _containerSize,
-                          child: Center(
-                            child: SelectableText(
-                              wantedODInfo[i]['WT_mm'].toStringAsFixed(2),
-                              style: TextStyle(
-                                fontWeight: fontWeightMM,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Spacer(
-                          flex: 80,
-                        ),
-                        Container(
-                          width: _containerSize,
-                          child: Center(
-                            child: SelectableText(
-                              wantedODInfo[i]['lb_per_ft'].toStringAsFixed(1),
-                              style: TextStyle(
-                                fontWeight: FontWeight.w200,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Spacer(
-                          flex: 70,
-                        ),
-                        Container(
-                          width: _containerSize,
-                          child: Center(
-                            child: SelectableText(
-                              wantedODInfo[i]['kg_per_m'].toStringAsFixed(1),
-                              style: TextStyle(
-                                fontWeight: FontWeight.w200,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Spacer(
-                          flex: 100,
-                        ),
-                        Container(
-                          width: _containerSize / 1.8,
-                          child: Center(
-                            child: Text(
-                              wantedODInfo[i]['Sch_1'].toString(),
-                              style: TextStyle(
-                                fontWeight: FontWeight.w200,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Spacer(
-                          flex: 50,
-                        ),
-                        Container(
-                          width: _containerSize / 1.8,
-                          child: Center(
-                            child: Text(
-                              wantedODInfo[i]['Sch_2'].toString(),
-                              style: TextStyle(
-                                fontWeight: FontWeight.w200,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Spacer(
-                          flex: 100,
-                        ),
-                      ],
-                    ),
-                    Divider(
-                      height: _dividerThickness,
-                      thickness: 0.25,
-                      //  color: Colors.grey,
-                    ),
-                    SizedBox(
-                      height: 2,
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-          SizedBox(
-            height: 10,
-          ),
-         // ConstrainedBox(constraints: BoxConstraints(maxWidth: 350))
-          if (androidPlatform)
-            Container(
-              height: _pickerSize,
-              alignment: Alignment.center,
-              padding: EdgeInsets.only(bottom: _pickerInset),
-              child: CupertinoPicker(
-                useMagnifier: true,
-                magnification: 1.1,
-                itemExtent: _pickerExtent,
-                onSelectedItemChanged: (selectedIndex) {
-                   scrollCount = scrollCount + 1;
-                  //
-                 _setScrollCount();
-                  //
-                  //  selectedIndexGlobal = selectedIndex;
-                  //
-                  // // tableRow = [];
-                   SystemSound.play(SystemSoundType.click);
-                   HapticFeedback.lightImpact();
-                  //  getSelectedDiameterData(selectedIndexGlobal,
-                  //      _containerSize, _dividerThickness);
-                  _selectedOD.value = selectedIndex;
-                },
-                children: getPickerItems(),
-              ),
-            ),
-          if (webPlatform || windowsPlatform)
-
-            Row(
-
-              children: [
-                Flexible(
-                  flex:1,
-                  child: IconButton(onPressed: () {
-_showMyDialog();
-                  }, icon: Icon(Icons.info_outline_rounded,color: Colors.grey,)),
-                ),
-
-                Flexible(
-                  flex:10,
-                  child: Container(
-                    height: (_height >= 600) ? max((_height*0.25), 150 ) : 150,
-                    width: (_width >= 600) ? 420 : min((_width * 0.7),420),
-                    alignment: Alignment.center,
-                    padding: EdgeInsets.only(bottom: 10),
-                    child: Scrollbar(
-                      controller: _scrollController,
-                     // thumbVisibility: true,
-                      child: ListView.builder(
-                          controller: _scrollController,
-                          itemCount: diam.length,
-                          itemBuilder: (context, index) {
-                            return Card(
-                              elevation: (_selectedOD.value == index) ? 10 : null,
-
-                              child: ListTile(
-                                selected: (_selectedOD.value == index),
-                                selectedColor: Colors.blue,
-                               // selected: allMessagesSelectionNumber.value == index,
-                                onTap: () {
-                                  _selectedOD.value = index;
-
-                                  _setScrollCount();
-                                  // tableRow = [];
-                                  SystemSound.play(SystemSoundType.click);
-                                  HapticFeedback.lightImpact();
-                                  // getSelectedDiameterData(_selectedOD.value,
-                                  //     _containerSize, _dividerThickness);
-                                },
-                                title: Text(
-                                  diam[index].toString(),
-                                  textAlign: TextAlign.center,
+                                  itemBuilder: (context, i) {
+                                    return Column(
+                                      children: [
+                                        SizedBox(
+                                          height: 2,
+                                        ),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Spacer(
+                                              flex: 100,
+                                            ),
+                                            Container(
+                                              width: _containerSize,
+                                              child: Center(
+                                                child: SelectableText(
+                                                  wantedODInfo[i]['WT_inch'].toStringAsFixed(3),
+                                                  style: TextStyle(
+                                                    fontWeight: fontWeightInches,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            Spacer(
+                                              flex: 70,
+                                            ),
+                                            Container(
+                                              width: _containerSize,
+                                              child: Center(
+                                                child: SelectableText(
+                                                  wantedODInfo[i]['WT_mm'].toStringAsFixed(2),
+                                                  style: TextStyle(
+                                                    fontWeight: fontWeightMM,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            Spacer(
+                                              flex: 80,
+                                            ),
+                                            Container(
+                                              width: _containerSize,
+                                              child: Center(
+                                                child: SelectableText(
+                                                  wantedODInfo[i]['lb_per_ft'].toStringAsFixed(1),
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.w200,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            Spacer(
+                                              flex: 70,
+                                            ),
+                                            Container(
+                                              width: _containerSize,
+                                              child: Center(
+                                                child: SelectableText(
+                                                  wantedODInfo[i]['kg_per_m'].toStringAsFixed(1),
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.w200,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            Spacer(
+                                              flex: 100,
+                                            ),
+                                            Container(
+                                              width: _containerSize / 1.8,
+                                              child: Center(
+                                                child: Text(
+                                                  wantedODInfo[i]['Sch_1'].toString(),
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.w200,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            Spacer(
+                                              flex: 50,
+                                            ),
+                                            Container(
+                                              width: _containerSize / 1.8,
+                                              child: Center(
+                                                child: Text(
+                                                  wantedODInfo[i]['Sch_2'].toString(),
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.w200,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            Spacer(
+                                              flex: 100,
+                                            ),
+                                          ],
+                                        ),
+                                        Divider(
+                                          height: _dividerThickness,
+                                          thickness: 0.25,
+                                          //  color: Colors.grey,
+                                        ),
+                                        SizedBox(
+                                          height: 2,
+                                        ),
+                                      ],
+                                    );
+                                  },
                                 ),
                               ),
-                            );
-                          }),
+                              SizedBox(
+                                height: 10,
+                              ),
+                              // ConstrainedBox(constraints: BoxConstraints(maxWidth: 350))
+                              if (androidPlatform)
+                                Container(
+                                  height: _pickerSize,
+                                  alignment: Alignment.center,
+                                  padding: EdgeInsets.only(bottom: _pickerInset),
+                                  child: CupertinoPicker(
+                                    useMagnifier: true,
+                                    magnification: 1.2,
+                                    itemExtent: _pickerExtent,
+                                    onSelectedItemChanged: (selectedIndex) {
+                                      scrollCount = scrollCount + 1;
+                                      //
+                                      _setScrollCount();
+                                      //
+                                      //  selectedIndexGlobal = selectedIndex;
+                                      //
+                                      // // tableRow = [];
+                                      SystemSound.play(SystemSoundType.click);
+                                      HapticFeedback.lightImpact();
+                                      //  getSelectedDiameterData(selectedIndexGlobal,
+                                      //      _containerSize, _dividerThickness);
+                                      _selectedOD.value = selectedIndex;
+                                    },
+                                    children: getPickerItems(),
+                                  ),
+                                ),
+                              if (webPlatform || windowsPlatform)
+
+                                Row(
+
+                                  children: [
+                                    Flexible(
+                                      flex:1,
+                                      child: IconButton(onPressed: () {
+                                        _showMyDialog();
+                                      }, icon: Icon(Icons.info_outline_rounded,color: Colors.grey,)),
+                                    ),
+
+                                    Flexible(
+                                      flex:10,
+                                      child: Container(
+                                        height: (_height >= 600) ? max((_height*0.25), 150 ) : 150,
+                                        width: (_width >= 600) ? 420 : min((_width * 0.7),420),
+                                        alignment: Alignment.center,
+                                        padding: EdgeInsets.only(bottom: 10),
+                                        child: Scrollbar(
+                                          controller: _scrollController,
+                                          // thumbVisibility: true,
+                                          child: ListView.builder(
+                                              controller: _scrollController,
+                                              itemCount: diam.length,
+                                              itemBuilder: (context, index) {
+                                                return Card(
+                                                  elevation: (_selectedOD.value == index) ? 10 : null,
+
+                                                  child: ListTile(
+                                                    selected: (_selectedOD.value == index),
+                                                    selectedColor: Colors.blue,
+                                                    // selected: allMessagesSelectionNumber.value == index,
+                                                    onTap: () {
+                                                      _selectedOD.value = index;
+
+                                                      _setScrollCount();
+                                                      // tableRow = [];
+                                                      SystemSound.play(SystemSoundType.click);
+                                                      HapticFeedback.lightImpact();
+                                                      // getSelectedDiameterData(_selectedOD.value,
+                                                      //     _containerSize, _dividerThickness);
+                                                    },
+                                                    title: Text(
+                                                      diam[index].toString(),
+                                                      textAlign: TextAlign.center,
+                                                    ),
+                                                  ),
+                                                );
+                                              }),
+                                        ),
+                                      ),
+                                    ),
+                                    Flexible(
+                                        flex:1,
+                                        child: Container()),
+                                  ],
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                ),
+                            ],);
+                          }
+                      ),
                     ),
-                  ),
-                ),
-                Flexible(
-                    flex:1,
-                    child: Container()),
-              ],
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-            ),
-        ],);
-      }
-      ),
-    ),
 
 
                    // BottomRow(key: Key('bottom_row'),),
@@ -767,11 +767,11 @@ class BottomRow extends StatelessWidget {
     String appleStoreImage = '';
     if (lightMode == Brightness.light) {
       appleStoreImage =
-          'assets/storeLogos/Download_on_the_App_Store_Badge_US-UK_wht_092917.png';
+      'assets/storeLogos/Download_on_the_App_Store_Badge_US-UK_wht_092917.png';
     }
     if (lightMode == Brightness.dark) {
       appleStoreImage =
-          'assets/storeLogos/Download_on_the_App_Store_Badge_US-UK_blk_092917.png';
+      'assets/storeLogos/Download_on_the_App_Store_Badge_US-UK_blk_092917.png';
     }
 
 
