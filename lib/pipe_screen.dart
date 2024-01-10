@@ -29,44 +29,43 @@ class _PriceScreenState extends State<PriceScreen> {
 
 
 
-  static const List<String> diam = [
-    "NPS [inches] OD [mm]",
-    "1/8  10.3 mm",
-    "1/4  13.7 mm",
-    "3/8  17.1 mm",
-    "1/2  21.3 mm",
-    "3/4  26.7 mm",
-    "1  33.3 mm",
-    "1-1/4  42.2 mm",
-    "1-1/2  48.3 mm",
-    "2  60.3 mm",
-    "2-1/2  73.0 mm",
-    "3  88.9 mm",
-    "3-1/2  101.6 mm",
-    "4  114.3 mm",
-    "5  141.3 mm",
-    "6  168.3 mm",
-    "8  219.1 mm",
-    "10  273.0 mm",
-    "12  323.9 mm",
-    "14  355.6 mm",
-    "16  406.4 mm",
-    "18  457.2 mm",
-    "20  508 mm",
-    "22  559 mm",
-    "24  610 mm",
-    "26  660 mm",
-    "28  711 mm",
-    "30  762 mm",
-    "32  813 mm",
-    "34  864 mm",
-    "36  914 mm",
-    "38  965 mm",
-    "40  1016 mm",
-    "42  1067 mm",
-    "48  1219 mm",
-    "54  1372 mm",
-    "60  1524 mm"
+  static const List<String> diam = ["NPS [inches]  OD [mm] OD [in]",
+    "1/8  10.3 mm 0.405 in",
+    "1/4  13.7 mm 0.540 in",
+    "3/8  17.1 mm 0.675 in",
+    "1/2  21.3 mm 0.840 in",
+    "3/4  26.7 mm 1.050 in",
+    "1  33.4 mm 1.315 in",
+    "1-1/4  42.2 mm 1.660 in",
+    "1-1/2  48.3 mm 1.900 in",
+    "2  60.3 mm 2.375 in",
+    "2-1/2  73.0 mm 2.875 in",
+    "3  88.9 mm 3.500 in",
+    "3-1/2  101.6 mm 4.000 in",
+    "4  114.3 mm 4.500 in",
+    "5  141.3 mm 5.563 in",
+    "6  168.3 mm 6.625 in",
+    "8  219.1 mm 8.625 in",
+    "10  273.0 mm 10.750 in",
+    "12  323.9 mm 12.750 in",
+    "14  355.6 mm 14.000 in",
+    "16  406.4 mm 16.000 in",
+    "18  457.2 mm 18.000 in",
+    "20  508 mm 20.000 in",
+    "22  559 mm 22.000 in",
+    "24  610 mm 24.000 in",
+    "26  660 mm 26.000 in",
+    "28  711 mm 28.000 in",
+    "30  762 mm 30.000 in",
+    "32  813 mm 32.000 in",
+    "34  864 mm 34.000 in",
+    "36  914 mm 36.000 in",
+    "38  965 mm 38.000 in",
+    "40  1016 mm 40.000 in",
+    "42  1067 mm 42.000 in",
+    "48  1219 mm 48.000 in",
+    "54  1372 mm 54.000 in",
+    "60  1524 mm 60.000 in"
   ];
 
 
@@ -606,9 +605,11 @@ class _PriceScreenState extends State<PriceScreen> {
                                   children: [
                                     Flexible(
                                       flex:1,
-                                      child: IconButton(onPressed: () {
+                                      child: IconButton(
+                                          onPressed: () {
                                         _showMyDialog();
-                                      }, icon: Icon(Icons.info_outline_rounded,color: Colors.grey,)),
+                                      },
+                                          icon: Icon(CupertinoIcons.info_circle,color: Colors.grey,),),
                                     ),
 
                                     Flexible(
