@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -20,9 +19,6 @@ class _PriceScreenState extends State<PriceScreen> {
 
 
   ValueNotifier<int> _selectedOD = ValueNotifier<int>(0);
-
-
-  List<Widget> tableRow = [];
 
   bool mmBold = true;
   bool inBold = false;
@@ -95,8 +91,6 @@ class _PriceScreenState extends State<PriceScreen> {
 
 
   var scrollCount = 0;
-  final newUserDefault = SharedPreferences.getInstance();
-
 
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
 
@@ -229,470 +223,181 @@ class _PriceScreenState extends State<PriceScreen> {
     });
   }
 
+  Future<void> _showMyDialog(BuildContext ctx) async {
+    showModalBottomSheet(
+      context: ctx,
+      builder: (context) {
+        return BottomRow(key: ValueKey('bottom_row'));
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-
-
-    double _height = MediaQuery.of(context).size.height;
-    double _width = MediaQuery.of(context).size.width;
-
-    double _containerSize = 50;
-    double _pickerExtent = 30;
-    double _dividerThickness = 15;
-    double _pickerSize = 175;
-    double _pickerInset = 15;
-
-    double _headerFont = 15;
-    double _containerSizeMultiply = 1.5;
-
-    int a = 100;
-    int b = 40;
-    int c = 40;
-    int d = 40;
-    int e = 100;
-    int g = 150;
-
-    if (_width >= 540 && _height >= 500) {
-      setState(() {
-        _containerSize = 50;
-        _headerFont = 17;
-        _dividerThickness = 15;
-        _pickerSize = 175;
-        _pickerInset = 30;
-        _containerSizeMultiply = 1.5;
-        a = 80;
-        b = 30;
-        c = 30;
-        d = 40;
-        e = 100;
-        g = 120;
-      });
-    }
-
-    if (_width >= 540) {
-      setState(() {
-        a = 80;
-        b = 30;
-        c = 30;
-        d = 40;
-        e = 100;
-        g = 120;
-      });
-    }
-
-    if (_width < 540) {
-      setState(() {
-        _headerFont = 12;
-        _containerSize = 60;
-        _containerSizeMultiply = 1;
-        a = 80;
-        b = 40;
-        c = 60;
-        d = 70;
-        e = 100;
-        g = 150;
-      });
-    }
-
-    if (_height < 500) {
-      setState(() {
-        _containerSize = 50;
-
-        _dividerThickness = 5;
-        _pickerSize = 100;
-        _pickerInset = 10;
-      });
-    }
-
-
-    Future<void> _showMyDialog() async {
-      showModalBottomSheet(
-        context: context,
-        builder: (context) {
-          return BottomRow(key: ValueKey('bottom_row'),);
-        },
-      );
-    }
-
     return Scaffold(
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: 600),
-            child: Builder(builder: (context) {
-              if (doneLoadingJSON == true) {
-                return Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    SizedBox(
-                      height: 25,
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Spacer(
-                          flex: a,
-                        ),
-                        Container(
-                          width:
-                          _containerSize * _containerSizeMultiply * 1.1 + 5,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(10),
-                            onTap: () {
-                              inBold = true;
-                              mmBold = false;
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: LayoutBuilder(builder: (context, constraints) {
+              final cfg = _LayoutConfig.resolve(constraints);
 
-                              setState(() {
-                                _setUserPref();
-                                fontWeightInches = FontWeight.w600;
-                                fontWeightMM = FontWeight.w200;
-
-                              });
-                            },
-                            child: Center(
-                              child: Text(
-                                'WT inches',
-                                maxLines: 1,
-                                style: TextStyle(
-                                  fontSize: _headerFont,
-                                  fontWeight: fontWeightInches,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Spacer(
-                          flex: b,
-                        ),
-                        Container(
-                          width: _containerSize * _containerSizeMultiply,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(10),
-                            onTap: () {
-                              inBold = false;
-                              mmBold = true;
-                              setState(() {
-                                _setUserPref();
-                                fontWeightInches = FontWeight.w200;
-                                fontWeightMM = FontWeight.w600;
-                                // tableRow = [];
-                                // getSelectedDiameterData(selectedIndexGlobal,
-                                //     _containerSize, _dividerThickness);
-                              });
-                            },
-                            child: Center(
-                              child: Text(
-                                'WT mm',
-                                maxLines: 1,
-                                style: TextStyle(
-                                  fontSize: _headerFont,
-                                  fontWeight: fontWeightMM,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Spacer(
-                          flex: c,
-                        ),
-                        Container(
-                          width: _containerSize * _containerSizeMultiply,
-                          child: Center(
-                            child: Text(
-                              'lb/ft',
-                              maxLines: 1,
-                              style: TextStyle(
-                                fontSize: _headerFont,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Spacer(
-                          flex: d,
-                        ),
-                        Container(
-                          width: _containerSize * _containerSizeMultiply,
-                          child: Center(
-                            child: Text(
-                              'kg/m',
-                              maxLines: 1,
-                              style: TextStyle(
-                                fontSize: _headerFont,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Spacer(
-                          flex: e,
-                        ),
-                        Container(
-                          width: _containerSize * _containerSizeMultiply,
-                          child: Center(
-                            child: Text(
-                              'Schedule',
-                              maxLines: 1,
-                              style: TextStyle(
-                                fontSize: _headerFont,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Spacer(
-                          flex: g,
-                        ),
-                      ],
-                    ),
-                    SizedBox(
-                      height: 10,
-                    ),
-                    Expanded(
-                      child: ValueListenableBuilder<int>(
-                          valueListenable: _selectedOD,
-                          builder: (context, value, child) {
-                            wantedODInfo = sList.where((e) => e['Name'] == diam[value]).toList();
-
-                            return Column(children: [
-                              Expanded(
-                                child: ListView.builder(
-                                  itemCount: wantedODInfo.length,
-
-                                  itemBuilder: (context, i) {
-                                    return Column(
-                                      children: [
-                                        SizedBox(
-                                          height: 2,
-                                        ),
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Spacer(
-                                              flex: 100,
-                                            ),
-                                            Container(
-                                              width: _containerSize,
-                                              child: Center(
-                                                child: SelectableText(
-                                                  wantedODInfo[i]['WT_inch'].toStringAsFixed(3),
-                                                  style: TextStyle(
-                                                    fontWeight: fontWeightInches,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            Spacer(
-                                              flex: 70,
-                                            ),
-                                            Container(
-                                              width: _containerSize,
-                                              child: Center(
-                                                child: SelectableText(
-                                                  wantedODInfo[i]['WT_mm'].toStringAsFixed(2),
-                                                  style: TextStyle(
-                                                    fontWeight: fontWeightMM,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            Spacer(
-                                              flex: 80,
-                                            ),
-                                            Container(
-                                              width: _containerSize,
-                                              child: Center(
-                                                child: SelectableText(
-                                                  wantedODInfo[i]['lb_per_ft'].toStringAsFixed(1),
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.w200,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            Spacer(
-                                              flex: 70,
-                                            ),
-                                            Container(
-                                              width: _containerSize,
-                                              child: Center(
-                                                child: SelectableText(
-                                                  wantedODInfo[i]['kg_per_m'].toStringAsFixed(1),
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.w200,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            Spacer(
-                                              flex: 100,
-                                            ),
-                                            Container(
-                                              width: _containerSize / 1.8,
-                                              child: Center(
-                                                child: Text(
-                                                  wantedODInfo[i]['Sch_1'].toString(),
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.w200,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            Spacer(
-                                              flex: 50,
-                                            ),
-                                            Container(
-                                              width: _containerSize / 1.8,
-                                              child: Center(
-                                                child: Text(
-                                                  wantedODInfo[i]['Sch_2'].toString(),
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.w200,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            Spacer(
-                                              flex: 100,
-                                            ),
-                                          ],
-                                        ),
-                                        Divider(
-                                          height: _dividerThickness,
-                                          thickness: 0.25,
-                                          //  color: Colors.grey,
-                                        ),
-                                        SizedBox(
-                                          height: 2,
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                ),
-                              ),
-                              SizedBox(
-                                height: 10,
-                              ),
-                              // ConstrainedBox(constraints: BoxConstraints(maxWidth: 350))
-                              if (androidPlatform)
-                                Container(
-                                  height: _pickerSize,
-                                  alignment: Alignment.center,
-                                  padding: EdgeInsets.only(bottom: _pickerInset),
-                                  child: CupertinoPicker(
-                                    useMagnifier: true,
-                                    magnification: 1.2,
-                                    itemExtent: _pickerExtent,
-                                    onSelectedItemChanged: (selectedIndex) {
-                                      scrollCount = scrollCount + 1;
-                                      //
-                                      _setScrollCount();
-                                      //
-                                      //  selectedIndexGlobal = selectedIndex;
-                                      //
-                                      // // tableRow = [];
-                                      SystemSound.play(SystemSoundType.click);
-                                      HapticFeedback.lightImpact();
-                                      //  getSelectedDiameterData(selectedIndexGlobal,
-                                      //      _containerSize, _dividerThickness);
-                                      _selectedOD.value = selectedIndex;
-                                    },
-                                    children: getPickerItems(),
-                                  ),
-                                ),
-                              if (webPlatform || windowsPlatform)
-
-                                Row(
-
-                                  children: [
-                                    Flexible(
-                                      flex:1,
-                                      child: IconButton(
-                                          onPressed: () {
-                                        _showMyDialog();
-                                      },
-                                          icon: Icon(CupertinoIcons.info_circle,color: Colors.grey,),),
-                                    ),
-
-                                    Flexible(
-                                      flex:10,
-                                      child: Container(
-                                        height: (_height >= 600) ? max((_height*0.25), 150 ) : 150,
-                                        width: (_width >= 600) ? 420 : min((_width * 0.7),420),
-                                        alignment: Alignment.center,
-                                        padding: EdgeInsets.only(bottom: 10),
-                                        child: Scrollbar(
-                                          controller: _scrollController,
-                                          // thumbVisibility: true,
-                                          child: ListView.builder(
-                                              controller: _scrollController,
-                                              itemCount: diam.length,
-                                              itemBuilder: (context, index) {
-                                                return Card(
-                                                  elevation: (_selectedOD.value == index) ? 10 : null,
-
-                                                  child: ListTile(
-                                                    selected: (_selectedOD.value == index),
-                                                    selectedColor: Colors.blue,
-                                                    // selected: allMessagesSelectionNumber.value == index,
-                                                    onTap: () {
-                                                      _selectedOD.value = index;
-
-                                                      _setScrollCount();
-                                                      // tableRow = [];
-                                                      SystemSound.play(SystemSoundType.click);
-                                                      HapticFeedback.lightImpact();
-                                                      // getSelectedDiameterData(_selectedOD.value,
-                                                      //     _containerSize, _dividerThickness);
-                                                    },
-                                                    title: Text(
-                                                      diam[index].toString(),
-                                                      textAlign: TextAlign.center,
-                                                    ),
-                                                  ),
-                                                );
-                                              }),
-                                        ),
-                                      ),
-                                    ),
-                                    Flexible(
-                                        flex:1,
-                                        child: Container()),
-                                  ],
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                ),
-                            ],);
-                          }
-                      ),
-                    ),
-
-
-                   // BottomRow(key: Key('bottom_row'),),
-                  ],
-                );
-              } else {
-                return Center(
+              if (!doneLoadingJSON) {
+                return const Center(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       SizedBox(
-                        child: CircularProgressIndicator(
-                          strokeWidth: 1,
-                        ),
                         width: 30,
                         height: 30,
+                        child: CircularProgressIndicator(strokeWidth: 1),
                       ),
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.only(top: 16),
                         child: Text(
                           'loading...',
                           style: TextStyle(fontWeight: FontWeight.w200),
                         ),
-                      )
+                      ),
                     ],
                   ),
                 );
               }
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 25),
+                  // ── Header row ──────────────────────────────────────────
+                  _PipeHeaderRow(
+                    cfg: cfg,
+                    fontWeightInches: fontWeightInches,
+                    fontWeightMM: fontWeightMM,
+                    onTapInches: () {
+                      inBold = true;
+                      mmBold = false;
+                      setState(() {
+                        _setUserPref();
+                        fontWeightInches = FontWeight.w600;
+                        fontWeightMM = FontWeight.w200;
+                      });
+                    },
+                    onTapMM: () {
+                      inBold = false;
+                      mmBold = true;
+                      setState(() {
+                        _setUserPref();
+                        fontWeightInches = FontWeight.w200;
+                        fontWeightMM = FontWeight.w600;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  // ── Data + picker ────────────────────────────────────────
+                  Expanded(
+                    child: ValueListenableBuilder<int>(
+                      valueListenable: _selectedOD,
+                      builder: (context, value, _) {
+                        wantedODInfo = sList
+                            .where((e) => e['Name'] == diam[value])
+                            .toList();
+
+                        return Column(children: [
+                          Expanded(
+                            child: ListView.builder(
+                              itemCount: wantedODInfo.length,
+                              itemBuilder: (context, i) {
+                                return _PipeDataRow(
+                                  cfg: cfg,
+                                  rowData: wantedODInfo[i],
+                                  fontWeightInches: fontWeightInches,
+                                  fontWeightMM: fontWeightMM,
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          if (androidPlatform)
+                            Container(
+                              height: cfg.pickerSize,
+                              alignment: Alignment.center,
+                              padding: EdgeInsets.only(bottom: cfg.pickerInset),
+                              child: CupertinoPicker(
+                                useMagnifier: true,
+                                magnification: 1.2,
+                                itemExtent: 30,
+                                onSelectedItemChanged: (selectedIndex) {
+                                  scrollCount += 1;
+                                  _setScrollCount();
+                                  SystemSound.play(SystemSoundType.click);
+                                  HapticFeedback.lightImpact();
+                                  _selectedOD.value = selectedIndex;
+                                },
+                                children: getPickerItems(),
+                              ),
+                            ),
+                          if (webPlatform || windowsPlatform)
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                IconButton(
+                                  onPressed: () => _showMyDialog(context),
+                                  icon: const Icon(
+                                    CupertinoIcons.info_circle,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Container(
+                                    height: cfg.pickerSize,
+                                    alignment: Alignment.center,
+                                    padding: const EdgeInsets.only(bottom: 10),
+                                    child: Scrollbar(
+                                      controller: _scrollController,
+                                      child: ListView.builder(
+                                        controller: _scrollController,
+                                        itemCount: diam.length,
+                                        itemBuilder: (context, index) {
+                                          return MouseRegion(
+                                            child: Card(
+                                              elevation: (_selectedOD.value ==
+                                                      index)
+                                                  ? 10
+                                                  : null,
+                                              child: ListTile(
+                                                selected:
+                                                    _selectedOD.value == index,
+                                                selectedColor: Colors.blue,
+                                                onTap: () {
+                                                  _selectedOD.value = index;
+                                                  _setScrollCount();
+                                                  SystemSound.play(
+                                                      SystemSoundType.click);
+                                                  HapticFeedback.lightImpact();
+                                                },
+                                                title: Text(
+                                                  diam[index],
+                                                  textAlign: TextAlign.center,
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                              ],
+                            ),
+                        ]);
+                      },
+                    ),
+                  ),
+                ],
+              );
             }),
           ),
         ),
@@ -702,6 +407,190 @@ class _PriceScreenState extends State<PriceScreen> {
 }
 
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Layout configuration — resolved once per build from LayoutBuilder constraints.
+// No more magic int variables or setState() calls inside build().
+// ─────────────────────────────────────────────────────────────────────────────
+class _LayoutConfig {
+  final double headerFont;
+  final double dividerThickness;
+  final double pickerSize;
+  final double pickerInset;
+
+  const _LayoutConfig({
+    required this.headerFont,
+    required this.dividerThickness,
+    required this.pickerSize,
+    required this.pickerInset,
+  });
+
+  factory _LayoutConfig.resolve(BoxConstraints constraints) {
+    final double w = constraints.maxWidth;
+    final bool wide = w >= 540;
+
+    return _LayoutConfig(
+      headerFont: wide ? 17 : 12,
+      dividerThickness: 15,
+      pickerSize: 175,
+      pickerInset: wide ? 30 : 15,
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared column flex values — header and data rows both use these so the
+// columns are guaranteed to align without any manual pixel arithmetic.
+// ─────────────────────────────────────────────────────────────────────────────
+class _Col {
+  static const int leading = 3;  // left margin
+  static const int wtIn    = 5;  // WT inches
+  static const int wtMm    = 5;  // WT mm
+  static const int lbFt    = 5;  // lb/ft
+  static const int kgM     = 5;  // kg/m
+  static const int sch1    = 4;  // Schedule col 1
+  static const int sch2    = 4;  // Schedule col 2
+  static const int trailing= 2;  // right margin
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Header row — clickable WT inches / WT mm toggle, static labels for the rest.
+// ─────────────────────────────────────────────────────────────────────────────
+class _PipeHeaderRow extends StatelessWidget {
+  final _LayoutConfig cfg;
+  final FontWeight fontWeightInches;
+  final FontWeight fontWeightMM;
+  final VoidCallback onTapInches;
+  final VoidCallback onTapMM;
+
+  const _PipeHeaderRow({
+    required this.cfg,
+    required this.fontWeightInches,
+    required this.fontWeightMM,
+    required this.onTapInches,
+    required this.onTapMM,
+  });
+
+  Widget _label(String text, {FontWeight? weight, VoidCallback? onTap}) {
+    final child = Text(
+      text,
+      maxLines: 1,
+      textAlign: TextAlign.center,
+      style: TextStyle(fontSize: cfg.headerFont, fontWeight: weight),
+    );
+    if (onTap == null) return child;
+    return InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: onTap,
+      child: child,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Spacer(flex: _Col.leading),
+        Expanded(
+          flex: _Col.wtIn,
+          child: _label('WT inches', weight: fontWeightInches, onTap: onTapInches),
+        ),
+        Expanded(
+          flex: _Col.wtMm,
+          child: _label('WT mm', weight: fontWeightMM, onTap: onTapMM),
+        ),
+        Expanded(
+          flex: _Col.lbFt,
+          child: _label('lb/ft'),
+        ),
+        Expanded(
+          flex: _Col.kgM,
+          child: _label('kg/m'),
+        ),
+        Expanded(
+          flex: _Col.sch1 + _Col.sch2,
+          child: _label('Schedule'),
+        ),
+        const Spacer(flex: _Col.trailing),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Data row — one row per wall-thickness entry, uses identical flex values to
+// _PipeHeaderRow so columns always line up perfectly.
+// ─────────────────────────────────────────────────────────────────────────────
+class _PipeDataRow extends StatelessWidget {
+  final _LayoutConfig cfg;
+  final Map<String, dynamic> rowData;
+  final FontWeight fontWeightInches;
+  final FontWeight fontWeightMM;
+
+  const _PipeDataRow({
+    required this.cfg,
+    required this.rowData,
+    required this.fontWeightInches,
+    required this.fontWeightMM,
+  });
+
+  Widget _cell(String text, {FontWeight weight = FontWeight.w200}) {
+    return SelectableText(
+      text,
+      textAlign: TextAlign.center,
+      style: TextStyle(fontWeight: weight),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const SizedBox(height: 2),
+        Row(
+          children: [
+            const Spacer(flex: _Col.leading),
+            Expanded(
+              flex: _Col.wtIn,
+              child: _cell(
+                rowData['WT_inch'].toStringAsFixed(3),
+                weight: fontWeightInches,
+              ),
+            ),
+            Expanded(
+              flex: _Col.wtMm,
+              child: _cell(
+                rowData['WT_mm'].toStringAsFixed(2),
+                weight: fontWeightMM,
+              ),
+            ),
+            Expanded(
+              flex: _Col.lbFt,
+              child: _cell(rowData['lb_per_ft'].toStringAsFixed(1)),
+            ),
+            Expanded(
+              flex: _Col.kgM,
+              child: _cell(rowData['kg_per_m'].toStringAsFixed(1)),
+            ),
+            Expanded(
+              flex: _Col.sch1,
+              child: _cell(rowData['Sch_1'].toString()),
+            ),
+            Expanded(
+              flex: _Col.sch2,
+              child: _cell(rowData['Sch_2'].toString()),
+            ),
+            const Spacer(flex: _Col.trailing),
+          ],
+        ),
+        Divider(height: cfg.dividerThickness, thickness: 0.25),
+        const SizedBox(height: 2),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 class BottomRow extends StatelessWidget {
   const BottomRow({

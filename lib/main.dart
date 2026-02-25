@@ -45,7 +45,7 @@ class MyApp extends StatelessWidget {
           surfaceVariant: MaterialColor(0xFFFFFFFF, colorWhite),
           onSurface: Colors.black,
         ),
-        tabBarTheme: TabBarTheme(
+        tabBarTheme: TabBarThemeData(
           labelColor: MaterialColor(0xFF000000, color),
         ),
         appBarTheme: AppBarTheme(
@@ -63,7 +63,7 @@ class MyApp extends StatelessWidget {
           secondary:Colors.lightBlue,
           tertiary: Colors.lightBlue,
         ),
-        tabBarTheme: TabBarTheme(
+        tabBarTheme: TabBarThemeData(
           labelColor: MaterialColor(0xFFFFFFFF, colorWhite),
         ),
         appBarTheme: AppBarTheme(
