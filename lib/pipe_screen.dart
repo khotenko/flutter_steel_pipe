@@ -232,6 +232,13 @@ class _PriceScreenState extends State<PriceScreen> {
     );
   }
 
+  Future<void> _estNPS(BuildContext ctx) async {
+    showDialog(
+      context: ctx,
+      builder: (context) => const SagittaCalculatorDialog(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -342,6 +349,14 @@ class _PriceScreenState extends State<PriceScreen> {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
+                                IconButton(
+                                  tooltip: 'Estimate NPS from Sagitta',
+                                  onPressed: () => _estNPS(context),
+                                  icon: const Icon(
+                                    CupertinoIcons.circle_lefthalf_fill,
+                                    color: Colors.grey,
+                                  ),
+                                ),
                                 IconButton(
                                   onPressed: () => _showMyDialog(context),
                                   icon: const Icon(
@@ -829,3 +844,458 @@ class BottomRow extends StatelessWidget {
     }
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NPS data helpers
+// ─────────────────────────────────────────────────────────────────────────────
+class _NpsEntry {
+  final String npsLabel;
+  final double odIn;
+  final double odMm;
+  const _NpsEntry(this.npsLabel, this.odIn, this.odMm);
+}
+
+List<_NpsEntry> _parseDiam() {
+  // matches "NPS  ODmm mm ODin in"  e.g. "1/2  21.3 mm 0.840 in"
+  final re = RegExp(r'^(.+?)\s{2,}([\d.]+)\s*mm\s+([\d.]+)\s*in');
+  final result = <_NpsEntry>[];
+  for (final s in _PriceScreenState.diam.skip(1)) {
+    final m = re.firstMatch(s);
+    if (m != null) {
+      result.add(_NpsEntry(
+        m.group(1)!.trim(),
+        double.parse(m.group(3)!),
+        double.parse(m.group(2)!),
+      ));
+    }
+  }
+  return result;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Schematic painter – shows arc (top of pipe), chord, sagitta, radius
+// ─────────────────────────────────────────────────────────────────────────────
+class _SagittaSchemePainter extends CustomPainter {
+  final Color color;
+  const _SagittaSchemePainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.6;
+
+    final dashedPaint = Paint()
+      ..color = color.withValues(alpha: 0.5)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+
+    final arrowPaint = Paint()
+      ..color = Colors.blue
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.8;
+
+    // Layout constants
+    final cx = size.width / 2;
+    final cy = size.height * 0.78; // centre of full circle (below canvas)
+    final r = size.height * 0.72;  // radius
+
+    // Draw full circle arc (only visible portion = top arc)
+    canvas.drawArc(
+      Rect.fromCircle(center: Offset(cx, cy), radius: r),
+      -3.14159, // -π (left)
+      3.14159,  // +π (full semicircle = top)
+      false,
+      paint,
+    );
+
+    // Chord line
+    final halfChord = size.width * 0.38;
+    final chordY = cy - r * 0.55;
+    canvas.drawLine(Offset(cx - halfChord, chordY), Offset(cx + halfChord, chordY), paint);
+
+    // Sagitta: from chord mid to arc top
+    final arcTopY = cy - r;
+    _drawArrow(canvas, arrowPaint, Offset(cx, chordY), Offset(cx, arcTopY));
+
+    // Dashed radius from centre to arc top-right
+    final radEndX = cx + r * 0.65;
+    final radEndY = cy - r * 0.76;
+    _drawDashed(canvas, dashedPaint, Offset(cx, cy), Offset(radEndX, radEndY));
+
+    // Labels
+    _drawLabel(canvas, 's', Offset(cx + 6, (chordY + arcTopY) / 2), color);
+    _drawLabel(canvas, 'Chord', Offset(cx - halfChord - 4, chordY - 14), color, align: TextAlign.right);
+    _drawLabel(canvas, 'r', Offset((cx + radEndX) / 2 + 4, (cy + radEndY) / 2), color);
+
+    // Chord end tick marks
+    for (final dx in [-halfChord, halfChord]) {
+      canvas.drawLine(Offset(cx + dx, chordY - 5), Offset(cx + dx, chordY + 5), paint);
+    }
+  }
+
+  void _drawArrow(Canvas canvas, Paint p, Offset from, Offset to) {
+    canvas.drawLine(from, to, p);
+    // arrowhead at `to`
+    final headLen = 7.0;
+    canvas.drawLine(to, to + Offset(-3, headLen), p);
+    canvas.drawLine(to, to + Offset(3, headLen), p);
+    // arrowhead at `from`
+    canvas.drawLine(from, from + Offset(-3, -headLen), p);
+    canvas.drawLine(from, from + Offset(3, -headLen), p);
+  }
+
+  void _drawDashed(Canvas canvas, Paint p, Offset from, Offset to) {
+    final dx = to.dx - from.dx;
+    final dy = to.dy - from.dy;
+    final len = (to - from).distance;
+    const dashLen = 6.0;
+    const gapLen = 4.0;
+    double traveled = 0;
+    while (traveled < len) {
+      final t0 = traveled / len;
+      final t1 = ((traveled + dashLen) / len).clamp(0.0, 1.0);
+      canvas.drawLine(
+        Offset(from.dx + dx * t0, from.dy + dy * t0),
+        Offset(from.dx + dx * t1, from.dy + dy * t1),
+        p,
+      );
+      traveled += dashLen + gapLen;
+    }
+  }
+
+  void _drawLabel(Canvas canvas, String text, Offset pos, Color color,
+      {TextAlign align = TextAlign.left}) {
+    final tp = TextPainter(
+      text: TextSpan(
+          text: text,
+          style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontStyle: FontStyle.italic)),
+      textAlign: align,
+      textDirection: TextDirection.ltr,
+    )..layout();
+    tp.paint(canvas, pos);
+  }
+
+  @override
+  bool shouldRepaint(_SagittaSchemePainter old) => old.color != color;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sagitta → OD Calculator Dialog
+// ─────────────────────────────────────────────────────────────────────────────
+class SagittaCalculatorDialog extends StatefulWidget {
+  const SagittaCalculatorDialog({super.key});
+  @override
+  State<SagittaCalculatorDialog> createState() =>
+      _SagittaCalculatorDialogState();
+}
+
+class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
+  final _sagittaCtrl = TextEditingController();
+  final _chordCtrl = TextEditingController();
+  bool _useInches = true;
+
+  double? _odIn;          // always stored in inches internally
+  List<_NpsEntry>? _matches; // [smaller, closest, larger]
+  String? _errorMsg;
+
+  late final List<_NpsEntry> _npsTable;
+
+  @override
+  void initState() {
+    super.initState();
+    _npsTable = _parseDiam();
+  }
+
+  @override
+  void dispose() {
+    _sagittaCtrl.dispose();
+    _chordCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onUnitToggle(bool toInches) {
+    final factor = toInches ? (1 / 25.4) : 25.4;
+    _convertField(_sagittaCtrl, factor);
+    _convertField(_chordCtrl, factor);
+    setState(() {
+      _useInches = toInches;
+    });
+    _calculate();
+  }
+
+  void _convertField(TextEditingController ctrl, double factor) {
+    final v = double.tryParse(ctrl.text);
+    if (v != null) {
+      ctrl.text = (v * factor).toStringAsFixed(3);
+    }
+  }
+
+  void _calculate() {
+    final sRaw = double.tryParse(_sagittaCtrl.text);
+    final cRaw = double.tryParse(_chordCtrl.text);
+
+    if (sRaw == null || cRaw == null || sRaw <= 0 || cRaw <= 0) {
+      setState(() {
+        _odIn = null;
+        _matches = null;
+        _errorMsg = null;
+      });
+      return;
+    }
+
+    // convert to inches for calculation
+    final s = _useInches ? sRaw : sRaw / 25.4;
+    final c = _useInches ? cRaw : cRaw / 25.4;
+    final halfC = c / 2;
+
+    // guard: sagitta must be < half chord (otherwise not a valid circular segment)
+    if (s >= halfC) {
+      setState(() {
+        _odIn = null;
+        _matches = null;
+        _errorMsg = '⚠ Invalid: sagitta must be less than half the chord';
+      });
+      return;
+    }
+
+    // Excel formula: OD = 2*(s^2 + (chord/2)^2) / (2*s)
+    final od = 2 * (s * s + halfC * halfC) / (2 * s);
+
+    // find closest, next-smaller, next-larger
+    int closestIdx = 0;
+    double minDelta = double.infinity;
+    for (int i = 0; i < _npsTable.length; i++) {
+      final d = (_npsTable[i].odIn - od).abs();
+      if (d < minDelta) {
+        minDelta = d;
+        closestIdx = i;
+      }
+    }
+
+    _NpsEntry? smaller =
+        closestIdx > 0 ? _npsTable[closestIdx - 1] : null;
+    _NpsEntry? larger =
+        closestIdx < _npsTable.length - 1 ? _npsTable[closestIdx + 1] : null;
+
+    setState(() {
+      _odIn = od;
+      _matches = [
+        if (smaller != null) smaller,
+        _npsTable[closestIdx],
+        if (larger != null) larger,
+      ];
+      _errorMsg = null;
+    });
+  }
+
+  String _fmtOd(double odIn) {
+    if (_useInches) return '${odIn.toStringAsFixed(3)} in';
+    return '${(odIn * 25.4).toStringAsFixed(1)} mm';
+  }
+
+  String _fmtDelta(double npsOdIn, double calcOdIn) {
+    final delta = (npsOdIn - calcOdIn).abs();
+    if (_useInches) return '±${delta.toStringAsFixed(3)} in';
+    return '±${(delta * 25.4).toStringAsFixed(1)} mm';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final labelColor = isDark ? Colors.white70 : Colors.black87;
+
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 460),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // ── Title row ──
+                Row(
+                  children: [
+                    const Icon(CupertinoIcons.circle_lefthalf_fill,
+                        color: Colors.grey),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text('Estimate NPS from Sagitta',
+                          style: theme.textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w600)),
+                    ),
+                    IconButton(
+                      visualDensity: VisualDensity.compact,
+                      icon: const Icon(Icons.close, size: 18),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Measure only the top of the exposed pipe in the trench.',
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: Colors.grey),
+                ),
+                const SizedBox(height: 12),
+
+                // ── Schematic ──
+                SizedBox(
+                  height: 180,
+                  child: CustomPaint(
+                    painter: _SagittaSchemePainter(color: labelColor),
+                    size: const Size(double.infinity, 180),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'OD = 2·(s² + (chord/2)²) / (2·s)',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                      fontStyle: FontStyle.italic, color: Colors.grey),
+                ),
+                const SizedBox(height: 14),
+
+                // ── Unit toggle ──
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('Units:', style: theme.textTheme.bodySmall),
+                    const SizedBox(width: 10),
+                    ToggleButtons(
+                      isSelected: [_useInches, !_useInches],
+                      onPressed: (i) {
+                        if (i == 0 && !_useInches) _onUnitToggle(true);
+                        if (i == 1 && _useInches) _onUnitToggle(false);
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      constraints: const BoxConstraints(
+                          minWidth: 52, minHeight: 34),
+                      children: const [
+                        Text('  in  '),
+                        Text('  mm  '),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+
+                // ── Inputs ──
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _sagittaCtrl,
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        decoration: InputDecoration(
+                          labelText:
+                              'Sagitta (s)  [${_useInches ? "in" : "mm"}]',
+                          border: const OutlineInputBorder(),
+                          isDense: true,
+                        ),
+                        onChanged: (_) => _calculate(),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextField(
+                        controller: _chordCtrl,
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        decoration: InputDecoration(
+                          labelText:
+                              'Full Chord  [${_useInches ? "in" : "mm"}]',
+                          border: const OutlineInputBorder(),
+                          isDense: true,
+                        ),
+                        onChanged: (_) => _calculate(),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+
+                // ── Error ──
+                if (_errorMsg != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(_errorMsg!,
+                        style: const TextStyle(
+                            color: Colors.red, fontSize: 12)),
+                  ),
+
+                // ── Results ──
+                if (_odIn != null && _matches != null) ...[
+                  const Divider(),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Calculated OD: ${_fmtOd(_odIn!)}',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  ..._matches!.map((entry) {
+                    final isClosest = _matches!.indexOf(entry) ==
+                        _matches!.indexWhere((e) =>
+                            (e.odIn - _odIn!).abs() ==
+                            _matches!
+                                .map((x) => (x.odIn - _odIn!).abs())
+                                .reduce((a, b) => a < b ? a : b));
+                    final delta = entry.odIn - _odIn!;
+                    final icon = isClosest
+                        ? Icons.check_circle_outline
+                        : delta > 0
+                            ? Icons.arrow_upward
+                            : Icons.arrow_downward;
+                    final iconColor = isClosest
+                        ? Colors.green
+                        : delta > 0
+                            ? Colors.orange
+                            : Colors.blue;
+                    return Card(
+                      elevation: isClosest ? 3 : 0,
+                      color: isClosest
+                          ? scheme.primaryContainer.withValues(alpha: 0.4)
+                          : null,
+                      margin: const EdgeInsets.symmetric(vertical: 3),
+                      child: ListTile(
+                        dense: true,
+                        leading: Icon(icon, color: iconColor, size: 20),
+                        title: Text('NPS ${entry.npsLabel}',
+                            style: TextStyle(
+                                fontWeight: isClosest
+                                    ? FontWeight.w600
+                                    : FontWeight.w400)),
+                        subtitle: Text(
+                            'OD: ${_fmtOd(entry.odIn)}'),
+                        trailing: Text(
+                          _fmtDelta(entry.odIn, _odIn!),
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: isClosest
+                                  ? Colors.green
+                                  : Colors.grey),
+                        ),
+                      ),
+                    );
+                  }),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
