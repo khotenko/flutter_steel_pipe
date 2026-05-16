@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
+import 'dart:math' as math;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
@@ -350,10 +351,10 @@ class _PriceScreenState extends State<PriceScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
                                 IconButton(
-                                  tooltip: 'Estimate NPS from Sagitta',
+                                  tooltip: 'Estimate NPS from arc',
                                   onPressed: () => _estNPS(context),
                                   icon: const Icon(
-                                    CupertinoIcons.circle_lefthalf_fill,
+                                    CupertinoIcons.circle,
                                     color: Colors.grey,
                                   ),
                                 ),
@@ -873,111 +874,169 @@ List<_NpsEntry> _parseDiam() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Schematic painter – shows arc (top of pipe), chord, sagitta, radius
+// Schematic painter – cross-section of pipe in trench: chord / sagitta / OD
 // ─────────────────────────────────────────────────────────────────────────────
 class _SagittaSchemePainter extends CustomPainter {
   final Color color;
   const _SagittaSchemePainter({required this.color});
 
+  static const Color _chordColor   = Color(0xFF2196F3); // blue
+  static const Color _sagittaColor = Color(0xFFE53935); // red
+  static const Color _odColor      = Color(0xFF43A047); // green
+  static const Color _groundColor  = Color(0xFF8D6E63); // brown
+
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
+    final w = size.width;
+    final h = size.height;
+    final cx = w / 2;
+
+    // Circle geometry: choose r & cy so the arc top sits ~28% down from canvas top,
+    // giving comfortable room for the OD label above it.
+    final r      = h * 0.52;   // radius
+    final cy     = h * 0.86;   // circle centre (partly below canvas)
+    final chordY = h * 0.62;   // ground / trench surface
+
+    final arcTopY   = cy - r;  // ≈ 0.34 h  — plenty of top margin
+    final halfChord = math.sqrt(math.max(0.0, r * r - math.pow(cy - chordY, 2)));
+    final lx = cx - halfChord;
+    final rx = cx + halfChord;
+
+    // ── paints ───────────────────────────────────────────────────────────
+    Paint stroke(Color c, {double width = 1.8}) => Paint()
+      ..color = c
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.6;
+      ..strokeWidth = width
+      ..strokeCap = StrokeCap.round;
 
-    final dashedPaint = Paint()
-      ..color = color.withValues(alpha: 0.5)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
+    Paint fill(Color c) => Paint()
+      ..color = c
+      ..style = PaintingStyle.fill;
 
-    final arrowPaint = Paint()
-      ..color = Colors.blue
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.8;
+    // ── 1. soil fill below chord ─────────────────────────────────────────
+    canvas.drawRect(Rect.fromLTRB(0, chordY, w, h),
+        fill(const Color(0x1A795548)));
 
-    // Layout constants
-    final cx = size.width / 2;
-    final cy = size.height * 0.78; // centre of full circle (below canvas)
-    final r = size.height * 0.72;  // radius
+    // ── 2. ghost full circle (dashed, very faint) ────────────────────────
+    _drawDashedCircle(canvas, stroke(color.withValues(alpha: 0.22), width: 1.0),
+        Offset(cx, cy), r);
 
-    // Draw full circle arc (only visible portion = top arc)
-    canvas.drawArc(
-      Rect.fromCircle(center: Offset(cx, cy), radius: r),
-      -3.14159, // -π (left)
-      3.14159,  // +π (full semicircle = top)
-      false,
-      paint,
-    );
+    // ── 3. visible arc fill + stroke ─────────────────────────────────────
+    final aLeft  = math.atan2(chordY - cy, lx - cx);
+    final aRight = math.atan2(chordY - cy, rx - cx);
+    final sweepVis = aRight - aLeft;
+    final arcRect  = Rect.fromCircle(center: Offset(cx, cy), radius: r);
 
-    // Chord line
-    final halfChord = size.width * 0.38;
-    final chordY = cy - r * 0.55;
-    canvas.drawLine(Offset(cx - halfChord, chordY), Offset(cx + halfChord, chordY), paint);
+    final arcPath = Path()
+      ..moveTo(lx, chordY)
+      ..arcTo(arcRect, aLeft, sweepVis, false)
+      ..lineTo(lx, chordY)
+      ..close();
+    canvas.drawPath(arcPath, fill(color.withValues(alpha: 0.08)));
+    canvas.drawArc(arcRect, aLeft, sweepVis, false, stroke(color, width: 2.2));
 
-    // Sagitta: from chord mid to arc top
-    final arcTopY = cy - r;
-    _drawArrow(canvas, arrowPaint, Offset(cx, chordY), Offset(cx, arcTopY));
+    // ── 4. ground line + hatch marks ─────────────────────────────────────
+    canvas.drawLine(Offset(0, chordY), Offset(w, chordY),
+        stroke(_groundColor, width: 1.4));
+    for (int i = 0; i <= 9; i++) {
+      final x = w * i / 9;
+      canvas.drawLine(Offset(x, chordY), Offset(x - 7, chordY + 9),
+          stroke(_groundColor.withValues(alpha: 0.55), width: 1.0));
+    }
 
-    // Dashed radius from centre to arc top-right
-    final radEndX = cx + r * 0.65;
-    final radEndY = cy - r * 0.76;
-    _drawDashed(canvas, dashedPaint, Offset(cx, cy), Offset(radEndX, radEndY));
+    // ── 5. OD double-arrow ── exact left to right pipe edge (cx ± r) ──────
+    final odArrowY = arcTopY - 10;
+    _drawDoubleArrow(canvas, stroke(_odColor, width: 1.6),
+        Offset(cx - r, odArrowY), Offset(cx + r, odArrowY));
+    // Drop-lines from arrow tips down to the circle's leftmost/rightmost points
+    final dropBottom = cy.clamp(0.0, h);
+    for (final x in [cx - r, cx + r]) {
+      canvas.drawLine(Offset(x, odArrowY), Offset(x, dropBottom),
+          stroke(_odColor.withValues(alpha: 0.35), width: 1.0));
+    }
+    _drawLabelCentered(canvas, 'OD', Offset(cx, odArrowY - 12), _odColor,
+        fontSize: 10, bold: true);
 
-    // Labels
-    _drawLabel(canvas, 's', Offset(cx + 6, (chordY + arcTopY) / 2), color);
-    _drawLabel(canvas, 'Chord', Offset(cx - halfChord - 4, chordY - 14), color, align: TextAlign.right);
-    _drawLabel(canvas, 'r', Offset((cx + radEndX) / 2 + 4, (cy + radEndY) / 2), color);
+    // ── 6. Chord double-arrow ── just above the ground line ──────────────
+    const chordOffset = 14.0;
+    final chordArrowY = chordY - chordOffset;
+    _drawDoubleArrow(canvas, stroke(_chordColor, width: 1.6),
+        Offset(lx, chordArrowY), Offset(rx, chordArrowY));
+    for (final x in [lx, rx]) {
+      canvas.drawLine(Offset(x, chordY - 6), Offset(x, chordY + 5),
+          stroke(_chordColor, width: 1.2));
+    }
+    // 'c' label to the RIGHT of centre so it never overlaps the sagitta arrow
+    _drawLabel(canvas, 'c', Offset(cx + halfChord * 0.35, chordArrowY - 17),
+        _chordColor, fontSize: 10);
 
-    // Chord end tick marks
-    for (final dx in [-halfChord, halfChord]) {
-      canvas.drawLine(Offset(cx + dx, chordY - 5), Offset(cx + dx, chordY + 5), paint);
+    // ── 7. Sagitta double-arrow ── exactly centred on cx ─────────────────
+    _drawDoubleArrow(canvas, stroke(_sagittaColor, width: 1.8),
+        Offset(cx, chordY), Offset(cx, arcTopY));
+    // 's' label to the LEFT of the arrow so it never overlaps 'c'
+    final sagMidY = (chordY + arcTopY) / 2;
+    _drawLabel(canvas, 's', Offset(cx - 11, sagMidY - 12),
+        _sagittaColor, fontSize: 11, italic: true);
+  }
+
+  // ── drawing helpers ──────────────────────────────────────────────────────
+
+  void _drawDoubleArrow(Canvas canvas, Paint p, Offset a, Offset b) {
+    canvas.drawLine(a, b, p);
+    _arrowHead(canvas, p, b, a);
+    _arrowHead(canvas, p, a, b);
+  }
+
+  void _arrowHead(Canvas canvas, Paint p, Offset tip, Offset away) {
+    final d   = tip - away;
+    final len = d.distance;
+    if (len == 0) return;
+    final ux = d.dx / len;
+    final uy = d.dy / len;
+    const s = 6.0, ww = 3.0;
+    canvas.drawLine(tip, tip - Offset(ux * s - uy * ww, uy * s + ux * ww), p);
+    canvas.drawLine(tip, tip - Offset(ux * s + uy * ww, uy * s - ux * ww), p);
+  }
+
+
+  void _drawDashedCircle(Canvas canvas, Paint p, Offset c, double r) {
+    const steps = 80, on = 4, off = 3;
+    Offset? prev;
+    for (int i = 0; i <= steps; i++) {
+      final a  = 2 * math.pi * i / steps;
+      final pt = Offset(c.dx + r * math.cos(a), c.dy + r * math.sin(a));
+      if (i % (on + off) < on && prev != null) canvas.drawLine(prev, pt, p);
+      prev = pt;
     }
   }
 
-  void _drawArrow(Canvas canvas, Paint p, Offset from, Offset to) {
-    canvas.drawLine(from, to, p);
-    // arrowhead at `to`
-    final headLen = 7.0;
-    canvas.drawLine(to, to + Offset(-3, headLen), p);
-    canvas.drawLine(to, to + Offset(3, headLen), p);
-    // arrowhead at `from`
-    canvas.drawLine(from, from + Offset(-3, -headLen), p);
-    canvas.drawLine(from, from + Offset(3, -headLen), p);
-  }
-
-  void _drawDashed(Canvas canvas, Paint p, Offset from, Offset to) {
-    final dx = to.dx - from.dx;
-    final dy = to.dy - from.dy;
-    final len = (to - from).distance;
-    const dashLen = 6.0;
-    const gapLen = 4.0;
-    double traveled = 0;
-    while (traveled < len) {
-      final t0 = traveled / len;
-      final t1 = ((traveled + dashLen) / len).clamp(0.0, 1.0);
-      canvas.drawLine(
-        Offset(from.dx + dx * t0, from.dy + dy * t0),
-        Offset(from.dx + dx * t1, from.dy + dy * t1),
-        p,
-      );
-      traveled += dashLen + gapLen;
-    }
-  }
-
-  void _drawLabel(Canvas canvas, String text, Offset pos, Color color,
-      {TextAlign align = TextAlign.left}) {
+  void _drawLabel(Canvas canvas, String text, Offset pos, Color c,
+      {double fontSize = 11, bool italic = false}) {
     final tp = TextPainter(
       text: TextSpan(
           text: text,
           style: TextStyle(
-              color: color,
-              fontSize: 11,
-              fontStyle: FontStyle.italic)),
-      textAlign: align,
+              color: c,
+              fontSize: fontSize,
+              fontStyle: italic ? FontStyle.italic : FontStyle.normal,
+              fontWeight: FontWeight.w500)),
       textDirection: TextDirection.ltr,
     )..layout();
     tp.paint(canvas, pos);
+  }
+
+  void _drawLabelCentered(Canvas canvas, String text, Offset center, Color c,
+      {double fontSize = 11, bool bold = false}) {
+    final tp = TextPainter(
+      text: TextSpan(
+          text: text,
+          style: TextStyle(
+              color: c,
+              fontSize: fontSize,
+              fontWeight: bold ? FontWeight.w700 : FontWeight.w400)),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    tp.paint(canvas, Offset(center.dx - tp.width / 2, center.dy - tp.height / 2));
   }
 
   @override
@@ -1125,11 +1184,11 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
                 // ── Title row ──
                 Row(
                   children: [
-                    const Icon(CupertinoIcons.circle_lefthalf_fill,
-                        color: Colors.grey),
-                    const SizedBox(width: 8),
+                    // const Icon(CupertinoIcons.circle,
+                    //     color: Colors.grey),
+                    // const SizedBox(width: 8),
                     Expanded(
-                      child: Text('Estimate NPS from Sagitta',
+                      child: Text('Estimate NPS from top part of pipe',
                           style: theme.textTheme.titleMedium
                               ?.copyWith(fontWeight: FontWeight.w600)),
                     ),
@@ -1142,10 +1201,18 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Measure only the top of the exposed pipe in the trench.',
+                  '\n Measure only the top of the exposed pipe in the trench.',
                   style: theme.textTheme.bodySmall
                       ?.copyWith(color: Colors.grey),
                 ),
+                const SizedBox(height: 14),
+                Text(
+                  ' OD = 2·(s² + (c/2)²) / (2·s)',
+                 // textAlign: TextAlign.center,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                      fontStyle: FontStyle.italic, color: Colors.grey),
+                ),
+
                 const SizedBox(height: 12),
 
                 // ── Schematic ──
@@ -1157,17 +1224,11 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  'OD = 2·(s² + (chord/2)²) / (2·s)',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                      fontStyle: FontStyle.italic, color: Colors.grey),
-                ),
-                const SizedBox(height: 14),
+
 
                 // ── Unit toggle ──
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     Text('Units:', style: theme.textTheme.bodySmall),
                     const SizedBox(width: 10),
@@ -1214,7 +1275,7 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
                             decimal: true),
                         decoration: InputDecoration(
                           labelText:
-                              'Full Chord  [${_useInches ? "in" : "mm"}]',
+                              'Chord (c) [${_useInches ? "in" : "mm"}]',
                           border: const OutlineInputBorder(),
                           isDense: true,
                         ),
