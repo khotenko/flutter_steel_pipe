@@ -927,16 +927,16 @@ List<_NpsEntry> _parseDiam() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Schematic painter – cross-section of pipe in trench: chord / sagitta / OD
+// Schematic painter – static cross-section: buried pipe with OD / chord / sagitta
 // ─────────────────────────────────────────────────────────────────────────────
 class _SagittaSchemePainter extends CustomPainter {
   final Color color;
   const _SagittaSchemePainter({required this.color});
 
-  static const Color _chordColor   = Color(0xFF2196F3); // blue
-  static const Color _sagittaColor = Color(0xFFE53935); // red
-  static const Color _odColor      = Color(0xFF43A047); // green
-  static const Color _groundColor  = Color(0xFF8D6E63); // brown
+  static const Color _chordColor   = Color(0xFF2196F3);
+  static const Color _sagittaColor = Color(0xFFE53935);
+  static const Color _odColor      = Color(0xFF43A047);
+  static const Color _groundColor  = Color(0xFF8D6E63);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -944,43 +944,32 @@ class _SagittaSchemePainter extends CustomPainter {
     final h = size.height;
     final cx = w / 2;
 
-    // Circle geometry: choose r & cy so the arc top sits ~28% down from canvas top,
-    // giving comfortable room for the OD label above it.
-    final r      = h * 0.52;   // radius
-    final cy     = h * 0.86;   // circle centre (partly below canvas)
-    final chordY = h * 0.62;   // ground / trench surface
+    final r      = h * 0.52;
+    final cy     = h * 0.86;
+    final chordY = h * 0.62;
 
-    final arcTopY   = cy - r;  // ≈ 0.34 h  — plenty of top margin
+    final arcTopY   = cy - r;
     final halfChord = math.sqrt(math.max(0.0, r * r - math.pow(cy - chordY, 2)));
     final lx = cx - halfChord;
     final rx = cx + halfChord;
 
-    // ── paints ───────────────────────────────────────────────────────────
     Paint stroke(Color c, {double width = 1.8}) => Paint()
-      ..color = c
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = width
+      ..color = c ..style = PaintingStyle.stroke ..strokeWidth = width
       ..strokeCap = StrokeCap.round;
+    Paint fill(Color c) => Paint()..color = c..style = PaintingStyle.fill;
 
-    Paint fill(Color c) => Paint()
-      ..color = c
-      ..style = PaintingStyle.fill;
+    // soil fill below chord
+    canvas.drawRect(Rect.fromLTRB(0, chordY, w, h), fill(const Color(0x1A795548)));
 
-    // ── 1. soil fill below chord ─────────────────────────────────────────
-    canvas.drawRect(Rect.fromLTRB(0, chordY, w, h),
-        fill(const Color(0x1A795548)));
+    // ghost full circle (dashed)
+    _drawDashedCircle(canvas, stroke(color.withValues(alpha: 0.22), width: 1.0), Offset(cx, cy), r);
 
-    // ── 2. ghost full circle (dashed, very faint) ────────────────────────
-    _drawDashedCircle(canvas, stroke(color.withValues(alpha: 0.22), width: 1.0),
-        Offset(cx, cy), r);
-
-    // ── 3. visible arc fill + stroke ─────────────────────────────────────
-    final aLeft  = math.atan2(chordY - cy, lx - cx);
-    final aRight = math.atan2(chordY - cy, rx - cx);
+    // visible arc fill + stroke
+    final aLeft    = math.atan2(chordY - cy, lx - cx);
+    final aRight   = math.atan2(chordY - cy, rx - cx);
     final sweepVis = aRight - aLeft;
     final arcRect  = Rect.fromCircle(center: Offset(cx, cy), radius: r);
-
-    final arcPath = Path()
+    final arcPath  = Path()
       ..moveTo(lx, chordY)
       ..arcTo(arcRect, aLeft, sweepVis, false)
       ..lineTo(lx, chordY)
@@ -988,29 +977,26 @@ class _SagittaSchemePainter extends CustomPainter {
     canvas.drawPath(arcPath, fill(color.withValues(alpha: 0.08)));
     canvas.drawArc(arcRect, aLeft, sweepVis, false, stroke(color, width: 2.2));
 
-    // ── 4. ground line + hatch marks ─────────────────────────────────────
-    canvas.drawLine(Offset(0, chordY), Offset(w, chordY),
-        stroke(_groundColor, width: 1.4));
+    // ground line + hatch
+    canvas.drawLine(Offset(0, chordY), Offset(w, chordY), stroke(_groundColor, width: 1.4));
     for (int i = 0; i <= 9; i++) {
       final x = w * i / 9;
       canvas.drawLine(Offset(x, chordY), Offset(x - 7, chordY + 9),
           stroke(_groundColor.withValues(alpha: 0.55), width: 1.0));
     }
 
-    // ── 5. OD double-arrow ── exact left to right pipe edge (cx ± r) ──────
+    // OD double-arrow (left to right pipe edge)
     final odArrowY = arcTopY - 10;
     _drawDoubleArrow(canvas, stroke(_odColor, width: 1.6),
         Offset(cx - r, odArrowY), Offset(cx + r, odArrowY));
-    // Drop-lines from arrow tips down to the circle's leftmost/rightmost points
     final dropBottom = cy.clamp(0.0, h);
     for (final x in [cx - r, cx + r]) {
       canvas.drawLine(Offset(x, odArrowY), Offset(x, dropBottom),
-          stroke(_odColor.withValues(alpha: 0.35), width: 1.0));
+          stroke(_odColor.withValues(alpha: 0.3), width: 1.0));
     }
-    _drawLabelCentered(canvas, 'OD', Offset(cx, odArrowY - 12), _odColor,
-        fontSize: 10, bold: true);
+    _drawLabelCentered(canvas, 'OD', Offset(cx, odArrowY - 12), _odColor, fontSize: 10, bold: true);
 
-    // ── 6. Chord double-arrow ── just above the ground line ──────────────
+    // chord double-arrow
     const chordOffset = 14.0;
     final chordArrowY = chordY - chordOffset;
     _drawDoubleArrow(canvas, stroke(_chordColor, width: 1.6),
@@ -1019,20 +1005,14 @@ class _SagittaSchemePainter extends CustomPainter {
       canvas.drawLine(Offset(x, chordY - 6), Offset(x, chordY + 5),
           stroke(_chordColor, width: 1.2));
     }
-    // 'c' label to the RIGHT of centre so it never overlaps the sagitta arrow
-    _drawLabel(canvas, 'c', Offset(cx + halfChord * 0.35, chordArrowY - 17),
-        _chordColor, fontSize: 10);
+    _drawLabel(canvas, 'c', Offset(cx + halfChord * 0.35, chordArrowY - 17), _chordColor, fontSize: 10);
 
-    // ── 7. Sagitta double-arrow ── exactly centred on cx ─────────────────
+    // sagitta double-arrow
     _drawDoubleArrow(canvas, stroke(_sagittaColor, width: 1.8),
         Offset(cx, chordY), Offset(cx, arcTopY));
-    // 's' label to the LEFT of the arrow so it never overlaps 'c'
     final sagMidY = (chordY + arcTopY) / 2;
-    _drawLabel(canvas, 's', Offset(cx - 11, sagMidY - 12),
-        _sagittaColor, fontSize: 11, italic: true);
+    _drawLabel(canvas, 's', Offset(cx - 11, sagMidY - 12), _sagittaColor, fontSize: 11, italic: true);
   }
-
-  // ── drawing helpers ──────────────────────────────────────────────────────
 
   void _drawDoubleArrow(Canvas canvas, Paint p, Offset a, Offset b) {
     canvas.drawLine(a, b, p);
@@ -1041,22 +1021,20 @@ class _SagittaSchemePainter extends CustomPainter {
   }
 
   void _arrowHead(Canvas canvas, Paint p, Offset tip, Offset away) {
-    final d   = tip - away;
+    final d = tip - away;
     final len = d.distance;
     if (len == 0) return;
-    final ux = d.dx / len;
-    final uy = d.dy / len;
+    final ux = d.dx / len; final uy = d.dy / len;
     const s = 6.0, ww = 3.0;
     canvas.drawLine(tip, tip - Offset(ux * s - uy * ww, uy * s + ux * ww), p);
     canvas.drawLine(tip, tip - Offset(ux * s + uy * ww, uy * s - ux * ww), p);
   }
 
-
   void _drawDashedCircle(Canvas canvas, Paint p, Offset c, double r) {
     const steps = 80, on = 4, off = 3;
     Offset? prev;
     for (int i = 0; i <= steps; i++) {
-      final a  = 2 * math.pi * i / steps;
+      final a = 2 * math.pi * i / steps;
       final pt = Offset(c.dx + r * math.cos(a), c.dy + r * math.sin(a));
       if (i % (on + off) < on && prev != null) canvas.drawLine(prev, pt, p);
       prev = pt;
@@ -1066,13 +1044,10 @@ class _SagittaSchemePainter extends CustomPainter {
   void _drawLabel(Canvas canvas, String text, Offset pos, Color c,
       {double fontSize = 11, bool italic = false}) {
     final tp = TextPainter(
-      text: TextSpan(
-          text: text,
-          style: TextStyle(
-              color: c,
-              fontSize: fontSize,
-              fontStyle: italic ? FontStyle.italic : FontStyle.normal,
-              fontWeight: FontWeight.w500)),
+      text: TextSpan(text: text, style: TextStyle(
+          color: c, fontSize: fontSize,
+          fontStyle: italic ? FontStyle.italic : FontStyle.normal,
+          fontWeight: FontWeight.w500)),
       textDirection: TextDirection.ltr,
     )..layout();
     tp.paint(canvas, pos);
@@ -1081,12 +1056,9 @@ class _SagittaSchemePainter extends CustomPainter {
   void _drawLabelCentered(Canvas canvas, String text, Offset center, Color c,
       {double fontSize = 11, bool bold = false}) {
     final tp = TextPainter(
-      text: TextSpan(
-          text: text,
-          style: TextStyle(
-              color: c,
-              fontSize: fontSize,
-              fontWeight: bold ? FontWeight.w700 : FontWeight.w400)),
+      text: TextSpan(text: text, style: TextStyle(
+          color: c, fontSize: fontSize,
+          fontWeight: bold ? FontWeight.w700 : FontWeight.w400)),
       textDirection: TextDirection.ltr,
     )..layout();
     tp.paint(canvas, Offset(center.dx - tp.width / 2, center.dy - tp.height / 2));
@@ -1183,9 +1155,9 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
     }
 
     // Excel formula: OD = 2*(s^2 + (chord/2)^2) / (2*s)
-    // If sagitta >= chord, the tool fully surrounded the pipe → OD = sagitta
+    // Full-engulf: tool spans full pipe width → OD = chord
     final od = sagittaIsOD
-        ? s
+        ? c
         : 2 * (s * s + halfC * halfC) / (2 * s);
 
     // find closest, next-smaller, next-larger
@@ -1281,10 +1253,11 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
 
                 // ── Schematic ──
                 SizedBox(
-                  height: 180,
+                  height: 200,
                   child: CustomPaint(
-                    painter: _SagittaSchemePainter(color: labelColor),
-                    size: const Size(double.infinity, 180),
+                    painter: _SagittaSchemePainter(
+                        color: labelColor),
+                    size: const Size(double.infinity, 200),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -1444,4 +1417,8 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
     );
   }
 }
+
+
+
+
 
