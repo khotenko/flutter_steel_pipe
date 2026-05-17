@@ -350,20 +350,24 @@ class _PriceScreenState extends State<PriceScreen> {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
-                                IconButton(
-                                  tooltip: 'Estimate NPS from arc',
-                                  onPressed: () => _estNPS(context),
-                                  icon: const Icon(
-                                    CupertinoIcons.circle,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                                IconButton(
-                                  onPressed: () => _showMyDialog(context),
-                                  icon: const Icon(
-                                    CupertinoIcons.info_circle,
-                                    color: Colors.grey,
-                                  ),
+                                Column(
+                                  children: [
+                                    IconButton(
+                                      tooltip: 'Estimate NPS from arc',
+                                      onPressed: () => _estNPS(context),
+                                      icon: const Icon(
+                                        CupertinoIcons.circle,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                    IconButton(
+                                      onPressed: () => _showMyDialog(context),
+                                      icon: const Icon(
+                                        CupertinoIcons.info_circle,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                                 Expanded(
                                   child: Container(
@@ -608,6 +612,48 @@ class _PipeDataRow extends StatelessWidget {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Discrete footer — "Developed by River Right Ltd © 2026"
+// ─────────────────────────────────────────────────────────────────────────────
+class _RiverRightFooter extends StatelessWidget {
+  const _RiverRightFooter();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'Developed by ',
+            style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
+          ),
+          GestureDetector(
+            onTap: () => launchUrl(
+              Uri.parse('https://www.riverright.ca/'),
+              mode: LaunchMode.externalApplication,
+            ),
+            child: Text(
+              'River Right Ltd',
+              style: TextStyle(
+                fontSize: 10,
+                color: Colors.blue.shade400,
+                decoration: TextDecoration.underline,
+              ),
+            ),
+          ),
+          Text(
+            ' \u00a9 2026',
+            style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 class BottomRow extends StatelessWidget {
   const BottomRow({
     required Key key,
@@ -685,15 +731,20 @@ class BottomRow extends StatelessWidget {
 
     if (kIsWeb) {
       return Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
 
         children: [
-          IconButton(
-            onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
-
-            icon: Icon(Icons.clear),color: Colors.grey,),
+          Align(
+            alignment: Alignment.centerRight,
+            child: IconButton(
+              onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+              icon: Icon(Icons.clear), color: Colors.grey,
+            ),
+          ),
           Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               FittedBox(
                 fit: BoxFit.scaleDown,
@@ -755,7 +806,7 @@ class BottomRow extends StatelessWidget {
               ),
             ],
           ),
-
+          _RiverRightFooter(),
         ],
       );
       // return Column(
@@ -822,15 +873,17 @@ class BottomRow extends StatelessWidget {
       //   ],
       // );
     } else {
-      return  Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
-
         children: [
-          IconButton(
-            onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
-
-            icon: Icon(Icons.clear),color: Colors.grey,),
+          Align(
+            alignment: Alignment.centerRight,
+            child: IconButton(
+              onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+              icon: Icon(Icons.clear), color: Colors.grey,
+            ),
+          ),
 
           TextButton(onPressed: () {
 
@@ -839,7 +892,7 @@ class BottomRow extends StatelessWidget {
                 padding: const EdgeInsets.all(8.0),
                 child: Text('https://pipesizes.web.app/'),
               )),
-
+          _RiverRightFooter(),
         ],
       );
     }
@@ -1059,6 +1112,7 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
   bool _useInches = true;
 
   double? _odIn;          // always stored in inches internally
+  bool _sagittaIsOD = false; // true when sagitta >= chord
   List<_NpsEntry>? _matches; // [smaller, closest, larger]
   String? _errorMsg;
 
@@ -1101,6 +1155,7 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
     if (sRaw == null || cRaw == null || sRaw <= 0 || cRaw <= 0) {
       setState(() {
         _odIn = null;
+        _sagittaIsOD = false;
         _matches = null;
         _errorMsg = null;
       });
@@ -1112,10 +1167,15 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
     final c = _useInches ? cRaw : cRaw / 25.4;
     final halfC = c / 2;
 
-    // guard: sagitta must be < half chord (otherwise not a valid circular segment)
-    if (s >= halfC) {
+    // When sagitta >= chord the contour tool fully surrounded the pipe —
+    // the sagitta IS the full diameter. Use it directly as OD.
+    final bool sagittaIsOD = s >= c;
+
+    // Also guard for sagitta >= half-chord but < chord (impossible segment)
+    if (!sagittaIsOD && s >= halfC) {
       setState(() {
         _odIn = null;
+        _sagittaIsOD = false;
         _matches = null;
         _errorMsg = '⚠ Invalid: sagitta must be less than half the chord';
       });
@@ -1123,7 +1183,10 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
     }
 
     // Excel formula: OD = 2*(s^2 + (chord/2)^2) / (2*s)
-    final od = 2 * (s * s + halfC * halfC) / (2 * s);
+    // If sagitta >= chord, the tool fully surrounded the pipe → OD = sagitta
+    final od = sagittaIsOD
+        ? s
+        : 2 * (s * s + halfC * halfC) / (2 * s);
 
     // find closest, next-smaller, next-larger
     int closestIdx = 0;
@@ -1143,6 +1206,7 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
 
     setState(() {
       _odIn = od;
+      _sagittaIsOD = sagittaIsOD;
       _matches = [
         if (smaller != null) smaller,
         _npsTable[closestIdx],
@@ -1299,6 +1363,27 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
                 if (_odIn != null && _matches != null) ...[
                   const Divider(),
                   const SizedBox(height: 4),
+                  if (_sagittaIsOD)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.info_outline,
+                              size: 14, color: Colors.orange),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              'Sagitta ≥ Chord: the contour tool fully surrounded '
+                              'the pipe. Sagitta is assumed to be the full OD.',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.orange.shade700,
+                                  fontStyle: FontStyle.italic),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   Text(
                     'Calculated OD: ${_fmtOd(_odIn!)}',
                     style: theme.textTheme.titleSmall?.copyWith(
