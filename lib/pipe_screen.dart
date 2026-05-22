@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'dart:convert';
 import 'dart:math' as math;
 import 'package:url_launcher/url_launcher.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
 
 import 'package:rate_my_app/rate_my_app.dart';
@@ -1005,13 +1004,13 @@ class _SagittaSchemePainter extends CustomPainter {
       canvas.drawLine(Offset(x, chordY - 6), Offset(x, chordY + 5),
           stroke(_chordColor, width: 1.2));
     }
-    _drawLabel(canvas, 'c', Offset(cx + halfChord * 0.35, chordArrowY - 17), _chordColor, fontSize: 10);
+    _drawLabel(canvas, 'C', Offset(cx + halfChord * 0.35, chordArrowY - 17), _chordColor, fontSize: 10);
 
     // sagitta double-arrow
     _drawDoubleArrow(canvas, stroke(_sagittaColor, width: 1.8),
         Offset(cx, chordY), Offset(cx, arcTopY));
     final sagMidY = (chordY + arcTopY) / 2;
-    _drawLabel(canvas, 's', Offset(cx - 11, sagMidY - 12), _sagittaColor, fontSize: 11, italic: true);
+    _drawLabel(canvas, 'S', Offset(cx - 14, sagMidY - 12), _sagittaColor, fontSize: 11, italic: true);
   }
 
   void _drawDoubleArrow(Canvas canvas, Paint p, Offset a, Offset b) {
@@ -1042,12 +1041,12 @@ class _SagittaSchemePainter extends CustomPainter {
   }
 
   void _drawLabel(Canvas canvas, String text, Offset pos, Color c,
-      {double fontSize = 11, bool italic = false}) {
+      {double fontSize = 16, bool italic = false}) {
     final tp = TextPainter(
       text: TextSpan(text: text, style: TextStyle(
           color: c, fontSize: fontSize,
           fontStyle: italic ? FontStyle.italic : FontStyle.normal,
-          fontWeight: FontWeight.w500)),
+          fontWeight: FontWeight.w800)),
       textDirection: TextDirection.ltr,
     )..layout();
     tp.paint(canvas, pos);
@@ -1066,6 +1065,85 @@ class _SagittaSchemePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_SagittaSchemePainter old) => old.color != color;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Live proportional schematic – just the pipe circle + OD arrow. No tool drawing.
+// ─────────────────────────────────────────────────────────────────────────────
+class _LiveSchemePainter extends CustomPainter {
+  final double odIn;
+  final Color baseColor;
+
+  const _LiveSchemePainter({
+    required this.odIn,
+    required this.baseColor,
+  });
+
+  static const Color _pipeColor = Color(0xFF1565C0);
+  static const Color _odColor   = Color(0xFF43A047);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final cx = w / 2;
+    final cy = h * 0.54;
+    final r  = math.min(w * 0.36, h * 0.38);
+
+    Paint stroke(Color c, {double width = 1.8}) => Paint()
+      ..color = c ..style = PaintingStyle.stroke ..strokeWidth = width
+      ..strokeCap = StrokeCap.round ..strokeJoin = StrokeJoin.round;
+    Paint fill(Color c) => Paint()..color = c..style = PaintingStyle.fill;
+
+    // Pipe circle
+    canvas.drawCircle(Offset(cx, cy), r, fill(_pipeColor.withValues(alpha: 0.10)));
+    canvas.drawCircle(Offset(cx, cy), r, stroke(_pipeColor, width: 2.5));
+
+    // OD double-arrow
+    final odY = cy - r - 14;
+    _drawDoubleArrow(canvas, stroke(_odColor, width: 1.6),
+        Offset(cx - r, odY), Offset(cx + r, odY));
+    for (final x in [cx - r, cx + r]) {
+      canvas.drawLine(Offset(x, odY), Offset(x, cy),
+          stroke(_odColor.withValues(alpha: 0.22), width: 1.0));
+    }
+
+    // OD value label centred above arrow
+    final odLabel = 'OD = ${odIn.toStringAsFixed(3)} in  /  ${(odIn * 25.4).toStringAsFixed(1)} mm';
+    _drawLabelCentered(canvas, odLabel, Offset(cx, odY - 12), _odColor,
+        fontSize: 10.5, bold: true);
+  }
+
+  void _drawDoubleArrow(Canvas canvas, Paint p, Offset a, Offset b) {
+    canvas.drawLine(a, b, p);
+    _ah(canvas, p, b, a);
+    _ah(canvas, p, a, b);
+  }
+
+  void _ah(Canvas canvas, Paint p, Offset tip, Offset away) {
+    final d = tip - away; final len = d.distance;
+    if (len == 0) return;
+    final ux = d.dx / len; final uy = d.dy / len;
+    const s = 6.0, ww = 3.0;
+    canvas.drawLine(tip, tip - Offset(ux * s - uy * ww, uy * s + ux * ww), p);
+    canvas.drawLine(tip, tip - Offset(ux * s + uy * ww, uy * s - ux * ww), p);
+  }
+
+
+  void _drawLabelCentered(Canvas canvas, String text, Offset center, Color c,
+      {double fontSize = 11, bool bold = false}) {
+    final tp = TextPainter(
+      text: TextSpan(text: text, style: TextStyle(
+          color: c, fontSize: fontSize,
+          fontWeight: bold ? FontWeight.w700 : FontWeight.w400)),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    tp.paint(canvas, Offset(center.dx - tp.width / 2, center.dy - tp.height / 2));
+  }
+
+  @override
+  bool shouldRepaint(_LiveSchemePainter old) =>
+      old.odIn != odIn || old.baseColor != baseColor;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1149,7 +1227,7 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
         _odIn = null;
         _sagittaIsOD = false;
         _matches = null;
-        _errorMsg = '⚠ Invalid: sagitta must be less than half the chord';
+        _errorMsg = '⚠ Invalid: S must be less than half the chord';
       });
       return;
     }
@@ -1297,7 +1375,7 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
                             decimal: true),
                         decoration: InputDecoration(
                           labelText:
-                              'Sagitta (s)  [${_useInches ? "in" : "mm"}]',
+                              'S  [${_useInches ? "in" : "mm"}]',
                           border: const OutlineInputBorder(),
                           isDense: true,
                         ),
@@ -1312,7 +1390,7 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
                             decimal: true),
                         decoration: InputDecoration(
                           labelText:
-                              'Chord (c) [${_useInches ? "in" : "mm"}]',
+                              'C [${_useInches ? "in" : "mm"}]',
                           border: const OutlineInputBorder(),
                           isDense: true,
                         ),
@@ -1346,8 +1424,8 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              'Sagitta ≥ Chord: the contour tool fully surrounded '
-                              'the pipe. Sagitta is assumed to be the full OD.',
+                              'S ≥ C: the contour tool fully surrounded '
+                              'the pipe. S is assumed to be same as C.',
                               style: TextStyle(
                                   fontSize: 11,
                                   color: Colors.orange.shade700,
@@ -1358,7 +1436,7 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
                       ),
                     ),
                   Text(
-                    'Calculated OD: ${_fmtOd(_odIn!)}',
+                    'Estimated OD: ${_fmtOd(_odIn!)}',
                     style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w600),
                   ),
@@ -1408,6 +1486,21 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
                       ),
                     );
                   }),
+
+                  // ── Live schematic ───────────────────────────────────────────────
+                  const SizedBox(height: 12),
+                  Text('Live schematic', style: theme.textTheme.titleSmall),
+                  const SizedBox(height: 4),
+                  SizedBox(
+                    height: 180,
+                    child: CustomPaint(
+                      painter: _LiveSchemePainter(
+                        odIn: _odIn ?? 0,
+                        baseColor: labelColor,
+                      ),
+                      size: const Size(double.infinity, 180),
+                    ),
+                  ),
                 ],
               ],
             ),
@@ -1417,6 +1510,24 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
     );
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
