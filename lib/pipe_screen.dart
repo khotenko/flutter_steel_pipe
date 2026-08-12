@@ -242,6 +242,16 @@ class _PriceScreenState extends State<PriceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
+      floatingActionButton: androidPlatform
+          ? FloatingActionButton.small(
+              tooltip: 'Estimate NPS from arc',
+             // backgroundColor: Colors.grey.shade800,
+             // foregroundColor: Colors.white,
+              onPressed: () => _estNPS(context),
+              child: const Icon(CupertinoIcons.circle, size: 10),
+            )
+          : null,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
