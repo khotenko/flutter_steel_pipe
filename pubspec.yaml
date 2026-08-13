@@ -20,6 +20,12 @@ version: 7.0.0+10
 environment:
   sdk: '>=3.0.6 <4.0.0'
 
+flutter_launcher_icons:
+  android: true
+  image_path: "assets/icon/app_icon.png"
+  adaptive_icon_background: "#000000"  # or any color that contrasts
+  adaptive_icon_foreground: "assets/icon/app_icon.png"
+
 dependencies:
   flutter_automation: ^2.0.0
   flutter:
@@ -31,7 +37,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   url_launcher: ^6.3.0
   shared_preferences: ^2.2.3
-  # flutter_native_splash:
+
   rate_my_app: ^2.4.1
   html: ^0.15.0
   msix:
@@ -52,7 +58,7 @@ msix_config:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
+  flutter_launcher_icons: ^0.14.4
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
@@ -72,6 +78,7 @@ flutter:
     - assets/storeLogos/Download_on_the_App_Store_Badge_US-UK_wht_092917.png
     - assets/storeLogos/Download_on_the_App_Store_Badge_US-UK_blk_092917.png
     - logo/256.png
+    - assets/icon/app_icon.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
