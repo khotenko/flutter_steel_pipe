@@ -32,7 +32,7 @@ dependencies:
   url_launcher: ^6.3.0
   shared_preferences: ^2.2.3
   # flutter_native_splash:
-  rate_my_app: ^2.2.0
+  rate_my_app: ^2.4.1
   html: ^0.15.0
   msix:
 

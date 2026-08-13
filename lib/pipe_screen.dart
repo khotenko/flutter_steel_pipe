@@ -47,21 +47,21 @@ class _PriceScreenState extends State<PriceScreen> {
     "14  355.6 mm 14.000 in",
     "16  406.4 mm 16.000 in",
     "18  457.2 mm 18.000 in",
-    "20  508 mm 20.000 in",
-    "22  559 mm 22.000 in",
-    "24  610 mm 24.000 in",
-    "26  660 mm 26.000 in",
-    "28  711 mm 28.000 in",
-    "30  762 mm 30.000 in",
-    "32  813 mm 32.000 in",
-    "34  864 mm 34.000 in",
-    "36  914 mm 36.000 in",
-    "38  965 mm 38.000 in",
-    "40  1016 mm 40.000 in",
-    "42  1067 mm 42.000 in",
-    "48  1219 mm 48.000 in",
-    "54  1372 mm 54.000 in",
-    "60  1524 mm 60.000 in"
+    "20  508 mm 20 in",
+    "22  559 mm 22 in",
+    "24  610 mm 24 in",
+    "26  660 mm 26 in",
+    "28  711 mm 28 in",
+    "30  762 mm 30 in",
+    "32  813 mm 32 in",
+    "34  864 mm 34 in",
+    "36  914 mm 36 in",
+    "38  965 mm 38 in",
+    "40  1016 mm 40 in",
+    "42  1067 mm 42 in",
+    "48  1219 mm 48 in",
+    "54  1372 mm 54 in",
+    "60  1524 mm 60 in"
   ];
 
 
@@ -77,6 +77,7 @@ class _PriceScreenState extends State<PriceScreen> {
       pickerItems.add(
         Center(
           child: Text(
+
             diameter,
           ),
         ),
@@ -246,10 +247,10 @@ class _PriceScreenState extends State<PriceScreen> {
       floatingActionButton: androidPlatform
           ? FloatingActionButton.small(
               tooltip: 'Estimate NPS from arc',
-             // backgroundColor: Colors.grey.shade800,
-             // foregroundColor: Colors.white,
+             backgroundColor: Colors.grey.shade500,
+             foregroundColor: Colors.white,
               onPressed: () => _estNPS(context),
-              child: const Icon(CupertinoIcons.circle, size: 10),
+              child: const Icon(CupertinoIcons.circle, size: 20),
             )
           : null,
       body: SafeArea(
@@ -341,9 +342,10 @@ class _PriceScreenState extends State<PriceScreen> {
                               alignment: Alignment.center,
                               padding: EdgeInsets.only(bottom: cfg.pickerInset),
                               child: CupertinoPicker(
+
                                 useMagnifier: true,
-                                magnification: 1.2,
-                                itemExtent: 30,
+                                magnification: 1.15,
+                                itemExtent: 40,
                                 onSelectedItemChanged: (selectedIndex) {
                                   scrollCount += 1;
                                   _setScrollCount();
