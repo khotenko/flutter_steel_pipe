@@ -7,6 +7,38 @@ import 'dart:math' as math;
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:function_tree/function_tree.dart';
+
+/// Parses a plain number, a simple fraction ("6/16"), or a whole + fraction
+/// ("1 1/4") and returns the resulting [double].  Returns 0.0 on any error.
+double doMath(String entry) {
+  try {
+    final parts = entry.trim().split(' ');
+    if (parts.length == 2) {
+      if (entry.contains('/')) {
+        try {
+          final whole = parts[0].interpret().toDouble();
+          final frac  = parts[1].interpret().toDouble();
+          final total = whole + frac;
+          return (total.isNaN || total.isInfinite) ? 0.0 : total;
+        } on Exception catch (_) {
+          return 0.0;
+        }
+      } else {
+        return 0.0;
+      }
+    } else {
+      try {
+        final result = entry.interpret().toDouble();
+        return (result.isNaN || result.isInfinite) ? 0.0 : result;
+      } on Exception catch (_) {
+        return 0.0;
+      }
+    }
+  } on RangeError catch (_) {
+    return 0.0;
+  }
+}
 
 class PriceScreen extends StatefulWidget {
   @override
@@ -1161,15 +1193,22 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
   }
 
   void _convertField(TextEditingController ctrl, double factor) {
-    final v = double.tryParse(ctrl.text);
+    final double? v = _useInches
+        ? (doMath(ctrl.text) > 0 ? doMath(ctrl.text) : null)
+        : double.tryParse(ctrl.text);
+
     if (v != null) {
       ctrl.text = (v * factor).toStringAsFixed(3);
     }
   }
 
   void _calculate() {
-    final sRaw = double.tryParse(_sagittaCtrl.text);
-    final cRaw = double.tryParse(_chordCtrl.text);
+    final double? sRaw = _useInches
+        ? (doMath(_sagittaCtrl.text) > 0 ? doMath(_sagittaCtrl.text) : null)
+        : double.tryParse(_sagittaCtrl.text);
+    final double? cRaw = _useInches
+        ? (doMath(_chordCtrl.text) > 0 ? doMath(_chordCtrl.text) : null)
+        : double.tryParse(_chordCtrl.text);
 
     if (sRaw == null || cRaw == null || sRaw <= 0 || cRaw <= 0) {
       setState(() {
@@ -1240,6 +1279,14 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
     return '${(odIn * 25.4).toStringAsFixed(1)} mm';
   }
 
+  /// Returns the decimal equivalent string when [text] is a fractional inch
+  /// expression (contains '/'), otherwise null.
+  String? _fracDecimalHint(String text) {
+    if (!_useInches || !text.contains('/')) return null;
+    final v = doMath(text);
+    return v > 0 ? v.toStringAsFixed(3) : null;
+  }
+
   String _fmtDelta(double npsOdIn, double calcOdIn) {
     final delta = (npsOdIn - calcOdIn).abs();
     if (_useInches) return '±${delta.toStringAsFixed(3)} in';
@@ -1283,12 +1330,12 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
                   ],
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  '\n Measure only the top of the exposed pipe in the trench.',
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(color: Colors.grey),
-                ),
-                const SizedBox(height: 14),
+                // Text(
+                //   '\n Measure only the top of the exposed pipe in the trench.',
+                //   style: theme.textTheme.bodySmall
+                //       ?.copyWith(color: Colors.grey),
+                // ),
+                // const SizedBox(height: 14),
                 Text(
                   ' OD = 2·(s² + (c/2)²) / (2·s)',
                  // textAlign: TextAlign.center,
@@ -1296,7 +1343,7 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
                       fontStyle: FontStyle.italic, color: Colors.grey),
                 ),
 
-                const SizedBox(height: 12),
+                // const SizedBox(height: 12),
 
                 // ── Schematic ──
                 SizedBox(
@@ -1338,32 +1385,68 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
                 Row(
                   children: [
                     Expanded(
-                      child: TextField(
-                        controller: _sagittaCtrl,
-                        keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
-                        decoration: InputDecoration(
-                          labelText:
-                              'S  [${_useInches ? "in" : "mm"}]',
-                          border: const OutlineInputBorder(),
-                          isDense: true,
-                        ),
-                        onChanged: (_) => _calculate(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TextField(
+                            controller: _sagittaCtrl,
+                            keyboardType: _useInches
+                                ? TextInputType.text
+                                : const TextInputType.numberWithOptions(decimal: true),
+                            decoration: InputDecoration(
+                              labelText:
+                                  'S  [${_useInches ? "in" : "mm"}]',
+                              hintText: _useInches ? 'e.g. 1 1/4' : null,
+                              border: const OutlineInputBorder(),
+                              isDense: true,
+                            ),
+                            onChanged: (_) => _calculate(),
+                          ),
+                          Padding(
+                              padding: const EdgeInsets.only(top: 3, left: 4),
+                              child: Text(
+                                _fracDecimalHint(_sagittaCtrl.text) != null
+                                    ? '= ${_fracDecimalHint(_sagittaCtrl.text)}'
+                                    : '',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: TextField(
-                        controller: _chordCtrl,
-                        keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
-                        decoration: InputDecoration(
-                          labelText:
-                              'C [${_useInches ? "in" : "mm"}]',
-                          border: const OutlineInputBorder(),
-                          isDense: true,
-                        ),
-                        onChanged: (_) => _calculate(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TextField(
+                            controller: _chordCtrl,
+                            keyboardType: _useInches
+                                ? TextInputType.text
+                                : const TextInputType.numberWithOptions(decimal: true),
+                            decoration: InputDecoration(
+                              labelText:
+                                  'C [${_useInches ? "in" : "mm"}]',
+                              hintText: _useInches ? 'e.g. 6/16' : null,
+                              border: const OutlineInputBorder(),
+                              isDense: true,
+                            ),
+                            onChanged: (_) => _calculate(),
+                          ),
+                          Padding(
+                              padding: const EdgeInsets.only(top: 3, left: 4),
+                              child: Text(
+                                _fracDecimalHint(_chordCtrl.text) != null
+                                    ? '= ${_fracDecimalHint(_chordCtrl.text)}'
+                                    : '',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                   ],
@@ -1381,7 +1464,7 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
 
                 // ── Results ──
                 if (_odIn != null && _matches != null) ...[
-                  const Divider(),
+                  // const Divider(),
                   const SizedBox(height: 4),
                   if (_sagittaIsOD)
                     Padding(
@@ -1404,12 +1487,18 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
                         ],
                       ),
                     ),
-                  Text(
-                    'Estimated OD: ${_fmtOd(_odIn!)}',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600),
+                  Center(
+                    child: Text(
+                      'Estimated OD: ${_fmtOd(_odIn!)}',
+
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontSize: 19,
+                          fontWeight: FontWeight.w600),
+                    ),
                   ),
-                  const SizedBox(height: 8),
+                  Center(
+                    child: const Text('closes matches:', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                  ),
                   ..._matches!.map((entry) {
                     final isClosest = _matches!.indexOf(entry) ==
                         _matches!.indexWhere((e) =>
@@ -1457,9 +1546,9 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
                   }),
 
                   // ── Live schematic ───────────────────────────────────────────────
-                  const SizedBox(height: 12),
-                  Text('Live schematic', style: theme.textTheme.titleSmall),
-                  const SizedBox(height: 4),
+                  // const SizedBox(height: 12),
+                  // Text('Live schematic', style: theme.textTheme.titleSmall),
+                  // const SizedBox(height: 4),
                   SizedBox(
                     height: 180,
                     child: CustomPaint(

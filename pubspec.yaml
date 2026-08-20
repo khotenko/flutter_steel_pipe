@@ -39,6 +39,7 @@ dependencies:
   shared_preferences: ^2.2.3
 
   html: ^0.15.0
+  function_tree: ^0.9.1
   msix:
 
 
