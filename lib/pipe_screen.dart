@@ -18,7 +18,7 @@ double doMath(String entry) {
       if (entry.contains('/')) {
         try {
           final whole = parts[0].interpret().toDouble();
-          final frac  = parts[1].interpret().toDouble();
+          final frac = parts[1].interpret().toDouble();
           final total = whole + frac;
           return (total.isNaN || total.isInfinite) ? 0.0 : total;
         } on Exception catch (_) {
@@ -48,15 +48,13 @@ class PriceScreen extends StatefulWidget {
 class _PriceScreenState extends State<PriceScreen> {
   var sList = [];
 
-
   ValueNotifier<int> _selectedOD = ValueNotifier<int>(0);
 
   bool mmBold = true;
   bool inBold = false;
 
-
-
-  static const List<String> diam = ["NPS [inches]  OD [mm] OD [in]",
+  static const List<String> diam = [
+    "NPS [inches]  OD [mm] OD [in]",
     "1/8  10.3 mm 0.405 in",
     "1/4  13.7 mm 0.540 in",
     "3/8  17.1 mm 0.675 in",
@@ -95,20 +93,17 @@ class _PriceScreenState extends State<PriceScreen> {
     "60  1524 mm 60 in"
   ];
 
-
-
-   List<dynamic> wantedODInfo = [];
+  List<dynamic> wantedODInfo = [];
 
   List<Widget> getPickerItems() {
     List<Widget> pickerItems = [];
 
     for (String diameter in diam) {
-     // diam.add(diameter);
+      // diam.add(diameter);
 
       pickerItems.add(
         Center(
           child: Text(
-
             diameter,
           ),
         ),
@@ -120,7 +115,6 @@ class _PriceScreenState extends State<PriceScreen> {
 
   var fontWeightInches = FontWeight.w200;
   var fontWeightMM = FontWeight.w600;
-
 
   var scrollCount = 0;
 
@@ -134,7 +128,7 @@ class _PriceScreenState extends State<PriceScreen> {
 
   getJSON() async {
     final String response =
-    await rootBundle.loadString('assets/actualData.json');
+        await rootBundle.loadString('assets/actualData.json');
     List<dynamic> data = jsonDecode(response);
 
     sList = List<Map<String, dynamic>>.from(data);
@@ -142,8 +136,6 @@ class _PriceScreenState extends State<PriceScreen> {
     setState(() {
       doneLoadingJSON = true;
     });
-
-
   }
 
   Future<void> _getUserData() async {
@@ -179,8 +171,6 @@ class _PriceScreenState extends State<PriceScreen> {
   void initState() {
     super.initState();
 
-
-
     try {
       if (Platform.isAndroid) {
         androidPlatform = true;
@@ -196,10 +186,9 @@ class _PriceScreenState extends State<PriceScreen> {
       }
     }
 
-
     getJSON();
 
-    _getUserData().whenComplete(()  {
+    _getUserData().whenComplete(() {
       setState(() {
         if (mmBold == true && inBold == false) {
           fontWeightMM = FontWeight.w600;
@@ -236,8 +225,8 @@ class _PriceScreenState extends State<PriceScreen> {
       floatingActionButton: androidPlatform
           ? FloatingActionButton.small(
               tooltip: 'Estimate NPS from arc',
-             backgroundColor: Colors.grey.shade500,
-             foregroundColor: Colors.white,
+              backgroundColor: Colors.grey.shade500,
+              foregroundColor: Colors.white,
               onPressed: () => _estNPS(context),
               child: const Icon(CupertinoIcons.circle, size: 20),
             )
@@ -331,7 +320,6 @@ class _PriceScreenState extends State<PriceScreen> {
                               alignment: Alignment.center,
                               padding: EdgeInsets.only(bottom: cfg.pickerInset),
                               child: CupertinoPicker(
-
                                 useMagnifier: true,
                                 magnification: 1.15,
                                 itemExtent: 40,
@@ -382,10 +370,10 @@ class _PriceScreenState extends State<PriceScreen> {
                                         itemBuilder: (context, index) {
                                           return MouseRegion(
                                             child: Card(
-                                              elevation: (_selectedOD.value ==
-                                                      index)
-                                                  ? 10
-                                                  : null,
+                                              elevation:
+                                                  (_selectedOD.value == index)
+                                                      ? 10
+                                                      : null,
                                               child: ListTile(
                                                 selected:
                                                     _selectedOD.value == index,
@@ -426,8 +414,6 @@ class _PriceScreenState extends State<PriceScreen> {
   }
 }
 
-
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Layout configuration — resolved once per build from LayoutBuilder constraints.
 // No more magic int variables or setState() calls inside build().
@@ -463,14 +449,14 @@ class _LayoutConfig {
 // columns are guaranteed to align without any manual pixel arithmetic.
 // ─────────────────────────────────────────────────────────────────────────────
 class _Col {
-  static const int leading = 3;  // left margin
-  static const int wtIn    = 5;  // WT inches
-  static const int wtMm    = 5;  // WT mm
-  static const int lbFt    = 5;  // lb/ft
-  static const int kgM     = 5;  // kg/m
-  static const int sch1    = 4;  // Schedule col 1
-  static const int sch2    = 4;  // Schedule col 2
-  static const int trailing= 2;  // right margin
+  static const int leading = 3; // left margin
+  static const int wtIn = 5; // WT inches
+  static const int wtMm = 5; // WT mm
+  static const int lbFt = 5; // lb/ft
+  static const int kgM = 5; // kg/m
+  static const int sch1 = 4; // Schedule col 1
+  static const int sch2 = 4; // Schedule col 2
+  static const int trailing = 2; // right margin
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -513,7 +499,8 @@ class _PipeHeaderRow extends StatelessWidget {
         const Spacer(flex: _Col.leading),
         Expanded(
           flex: _Col.wtIn,
-          child: _label('WT inches', weight: fontWeightInches, onTap: onTapInches),
+          child:
+              _label('WT inches', weight: fontWeightInches, onTap: onTapInches),
         ),
         Expanded(
           flex: _Col.wtMm,
@@ -709,37 +696,29 @@ class BottomRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
-
-
-
-
     Brightness lightMode = MediaQuery.of(context).platformBrightness;
 
     String appleStoreImage = '';
     if (lightMode == Brightness.light) {
       appleStoreImage =
-      'assets/storeLogos/Download_on_the_App_Store_Badge_US-UK_wht_092917.png';
+          'assets/storeLogos/Download_on_the_App_Store_Badge_US-UK_wht_092917.png';
     }
     if (lightMode == Brightness.dark) {
       appleStoreImage =
-      'assets/storeLogos/Download_on_the_App_Store_Badge_US-UK_blk_092917.png';
+          'assets/storeLogos/Download_on_the_App_Store_Badge_US-UK_blk_092917.png';
     }
-
-
-
 
     if (kIsWeb) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
-
         children: [
           Align(
             alignment: Alignment.centerRight,
             child: IconButton(
               onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
-              icon: Icon(Icons.clear), color: Colors.grey,
+              icon: Icon(Icons.clear),
+              color: Colors.grey,
             ),
           ),
           Wrap(
@@ -780,7 +759,8 @@ class BottomRow extends StatelessWidget {
                       onTap: () {
                         _launchURLGoogle();
                       },
-                      child: Image.asset('assets/storeLogos/google-play-badge.png'),
+                      child: Image.asset(
+                          'assets/storeLogos/google-play-badge.png'),
                     ),
                   ),
                 ),
@@ -881,13 +861,12 @@ class BottomRow extends StatelessWidget {
             alignment: Alignment.centerRight,
             child: IconButton(
               onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
-              icon: Icon(Icons.clear), color: Colors.grey,
+              icon: Icon(Icons.clear),
+              color: Colors.grey,
             ),
           ),
-
-          TextButton(onPressed: () {
-
-          },
+          TextButton(
+              onPressed: () {},
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Text('https://pipesizes.web.app/'),
@@ -933,10 +912,10 @@ class _SagittaSchemePainter extends CustomPainter {
   final Color color;
   const _SagittaSchemePainter({required this.color});
 
-  static const Color _chordColor   = Color(0xFF2196F3);
+  static const Color _chordColor = Color(0xFF2196F3);
   static const Color _sagittaColor = Color(0xFFE53935);
-  static const Color _odColor      = Color(0xFF43A047);
-  static const Color _groundColor  = Color(0xFF8D6E63);
+  static const Color _odColor = Color(0xFF43A047);
+  static const Color _groundColor = Color(0xFF8D6E63);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -944,32 +923,39 @@ class _SagittaSchemePainter extends CustomPainter {
     final h = size.height;
     final cx = w / 2;
 
-    final r      = h * 0.52;
-    final cy     = h * 0.86;
+    final r = h * 0.52;
+    final cy = h * 0.86;
     final chordY = h * 0.62;
 
-    final arcTopY   = cy - r;
-    final halfChord = math.sqrt(math.max(0.0, r * r - math.pow(cy - chordY, 2)));
+    final arcTopY = cy - r;
+    final halfChord =
+        math.sqrt(math.max(0.0, r * r - math.pow(cy - chordY, 2)));
     final lx = cx - halfChord;
     final rx = cx + halfChord;
 
     Paint stroke(Color c, {double width = 1.8}) => Paint()
-      ..color = c ..style = PaintingStyle.stroke ..strokeWidth = width
+      ..color = c
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = width
       ..strokeCap = StrokeCap.round;
-    Paint fill(Color c) => Paint()..color = c..style = PaintingStyle.fill;
+    Paint fill(Color c) => Paint()
+      ..color = c
+      ..style = PaintingStyle.fill;
 
     // soil fill below chord
-    canvas.drawRect(Rect.fromLTRB(0, chordY, w, h), fill(const Color(0x1A795548)));
+    canvas.drawRect(
+        Rect.fromLTRB(0, chordY, w, h), fill(const Color(0x1A795548)));
 
     // ghost full circle (dashed)
-    _drawDashedCircle(canvas, stroke(color.withValues(alpha: 0.22), width: 1.0), Offset(cx, cy), r);
+    _drawDashedCircle(canvas, stroke(color.withValues(alpha: 0.22), width: 1.0),
+        Offset(cx, cy), r);
 
     // visible arc fill + stroke
-    final aLeft    = math.atan2(chordY - cy, lx - cx);
-    final aRight   = math.atan2(chordY - cy, rx - cx);
+    final aLeft = math.atan2(chordY - cy, lx - cx);
+    final aRight = math.atan2(chordY - cy, rx - cx);
     final sweepVis = aRight - aLeft;
-    final arcRect  = Rect.fromCircle(center: Offset(cx, cy), radius: r);
-    final arcPath  = Path()
+    final arcRect = Rect.fromCircle(center: Offset(cx, cy), radius: r);
+    final arcPath = Path()
       ..moveTo(lx, chordY)
       ..arcTo(arcRect, aLeft, sweepVis, false)
       ..lineTo(lx, chordY)
@@ -978,7 +964,8 @@ class _SagittaSchemePainter extends CustomPainter {
     canvas.drawArc(arcRect, aLeft, sweepVis, false, stroke(color, width: 2.2));
 
     // ground line + hatch
-    canvas.drawLine(Offset(0, chordY), Offset(w, chordY), stroke(_groundColor, width: 1.4));
+    canvas.drawLine(
+        Offset(0, chordY), Offset(w, chordY), stroke(_groundColor, width: 1.4));
     for (int i = 0; i <= 9; i++) {
       final x = w * i / 9;
       canvas.drawLine(Offset(x, chordY), Offset(x - 7, chordY + 9),
@@ -994,7 +981,8 @@ class _SagittaSchemePainter extends CustomPainter {
       canvas.drawLine(Offset(x, odArrowY), Offset(x, dropBottom),
           stroke(_odColor.withValues(alpha: 0.3), width: 1.0));
     }
-    _drawLabelCentered(canvas, 'OD', Offset(cx, odArrowY - 12), _odColor, fontSize: 10, bold: true);
+    _drawLabelCentered(canvas, 'OD', Offset(cx, odArrowY - 12), _odColor,
+        fontSize: 10, bold: true);
 
     // chord double-arrow
     const chordOffset = 14.0;
@@ -1005,13 +993,16 @@ class _SagittaSchemePainter extends CustomPainter {
       canvas.drawLine(Offset(x, chordY - 6), Offset(x, chordY + 5),
           stroke(_chordColor, width: 1.2));
     }
-    _drawLabel(canvas, 'C', Offset(cx + halfChord * 0.35, chordArrowY - 17), _chordColor, fontSize: 10);
+    _drawLabel(canvas, 'C', Offset(cx + halfChord * 0.35, chordArrowY - 17),
+        _chordColor,
+        fontSize: 10);
 
     // sagitta double-arrow
     _drawDoubleArrow(canvas, stroke(_sagittaColor, width: 1.8),
         Offset(cx, chordY), Offset(cx, arcTopY));
     final sagMidY = (chordY + arcTopY) / 2;
-    _drawLabel(canvas, 'S', Offset(cx - 14, sagMidY - 12), _sagittaColor, fontSize: 11, italic: true);
+    _drawLabel(canvas, 'S', Offset(cx - 14, sagMidY - 12), _sagittaColor,
+        fontSize: 11, italic: true);
   }
 
   void _drawDoubleArrow(Canvas canvas, Paint p, Offset a, Offset b) {
@@ -1024,7 +1015,8 @@ class _SagittaSchemePainter extends CustomPainter {
     final d = tip - away;
     final len = d.distance;
     if (len == 0) return;
-    final ux = d.dx / len; final uy = d.dy / len;
+    final ux = d.dx / len;
+    final uy = d.dy / len;
     const s = 6.0, ww = 3.0;
     canvas.drawLine(tip, tip - Offset(ux * s - uy * ww, uy * s + ux * ww), p);
     canvas.drawLine(tip, tip - Offset(ux * s + uy * ww, uy * s - ux * ww), p);
@@ -1044,10 +1036,13 @@ class _SagittaSchemePainter extends CustomPainter {
   void _drawLabel(Canvas canvas, String text, Offset pos, Color c,
       {double fontSize = 16, bool italic = false}) {
     final tp = TextPainter(
-      text: TextSpan(text: text, style: TextStyle(
-          color: c, fontSize: fontSize,
-          fontStyle: italic ? FontStyle.italic : FontStyle.normal,
-          fontWeight: FontWeight.w800)),
+      text: TextSpan(
+          text: text,
+          style: TextStyle(
+              color: c,
+              fontSize: fontSize,
+              fontStyle: italic ? FontStyle.italic : FontStyle.normal,
+              fontWeight: FontWeight.w800)),
       textDirection: TextDirection.ltr,
     )..layout();
     tp.paint(canvas, pos);
@@ -1056,12 +1051,16 @@ class _SagittaSchemePainter extends CustomPainter {
   void _drawLabelCentered(Canvas canvas, String text, Offset center, Color c,
       {double fontSize = 11, bool bold = false}) {
     final tp = TextPainter(
-      text: TextSpan(text: text, style: TextStyle(
-          color: c, fontSize: fontSize,
-          fontWeight: bold ? FontWeight.w700 : FontWeight.w400)),
+      text: TextSpan(
+          text: text,
+          style: TextStyle(
+              color: c,
+              fontSize: fontSize,
+              fontWeight: bold ? FontWeight.w700 : FontWeight.w400)),
       textDirection: TextDirection.ltr,
     )..layout();
-    tp.paint(canvas, Offset(center.dx - tp.width / 2, center.dy - tp.height / 2));
+    tp.paint(
+        canvas, Offset(center.dx - tp.width / 2, center.dy - tp.height / 2));
   }
 
   @override
@@ -1081,7 +1080,7 @@ class _LiveSchemePainter extends CustomPainter {
   });
 
   static const Color _pipeColor = Color(0xFF1565C0);
-  static const Color _odColor   = Color(0xFF43A047);
+  static const Color _odColor = Color(0xFF43A047);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1089,28 +1088,35 @@ class _LiveSchemePainter extends CustomPainter {
     final h = size.height;
     final cx = w / 2;
     final cy = h * 0.54;
-    final r  = math.min(w * 0.36, h * 0.38);
+    final r = math.min(w * 0.36, h * 0.38);
 
     Paint stroke(Color c, {double width = 1.8}) => Paint()
-      ..color = c ..style = PaintingStyle.stroke ..strokeWidth = width
-      ..strokeCap = StrokeCap.round ..strokeJoin = StrokeJoin.round;
-    Paint fill(Color c) => Paint()..color = c..style = PaintingStyle.fill;
+      ..color = c
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = width
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    Paint fill(Color c) => Paint()
+      ..color = c
+      ..style = PaintingStyle.fill;
 
     // Pipe circle
-    canvas.drawCircle(Offset(cx, cy), r, fill(_pipeColor.withValues(alpha: 0.10)));
+    canvas.drawCircle(
+        Offset(cx, cy), r, fill(_pipeColor.withValues(alpha: 0.10)));
     canvas.drawCircle(Offset(cx, cy), r, stroke(_pipeColor, width: 2.5));
 
     // OD double-arrow
     final odY = cy - r - 14;
-    _drawDoubleArrow(canvas, stroke(_odColor, width: 1.6),
-        Offset(cx - r, odY), Offset(cx + r, odY));
+    _drawDoubleArrow(canvas, stroke(_odColor, width: 1.6), Offset(cx - r, odY),
+        Offset(cx + r, odY));
     for (final x in [cx - r, cx + r]) {
       canvas.drawLine(Offset(x, odY), Offset(x, cy),
           stroke(_odColor.withValues(alpha: 0.22), width: 1.0));
     }
 
     // OD value label centred above arrow
-    final odLabel = 'OD = ${odIn.toStringAsFixed(3)} in  /  ${(odIn * 25.4).toStringAsFixed(1)} mm';
+    final odLabel =
+        'OD = ${odIn.toStringAsFixed(3)} in  /  ${(odIn * 25.4).toStringAsFixed(1)} mm';
     _drawLabelCentered(canvas, odLabel, Offset(cx, odY - 12), _odColor,
         fontSize: 10.5, bold: true);
   }
@@ -1122,24 +1128,29 @@ class _LiveSchemePainter extends CustomPainter {
   }
 
   void _ah(Canvas canvas, Paint p, Offset tip, Offset away) {
-    final d = tip - away; final len = d.distance;
+    final d = tip - away;
+    final len = d.distance;
     if (len == 0) return;
-    final ux = d.dx / len; final uy = d.dy / len;
+    final ux = d.dx / len;
+    final uy = d.dy / len;
     const s = 6.0, ww = 3.0;
     canvas.drawLine(tip, tip - Offset(ux * s - uy * ww, uy * s + ux * ww), p);
     canvas.drawLine(tip, tip - Offset(ux * s + uy * ww, uy * s - ux * ww), p);
   }
 
-
   void _drawLabelCentered(Canvas canvas, String text, Offset center, Color c,
       {double fontSize = 11, bool bold = false}) {
     final tp = TextPainter(
-      text: TextSpan(text: text, style: TextStyle(
-          color: c, fontSize: fontSize,
-          fontWeight: bold ? FontWeight.w700 : FontWeight.w400)),
+      text: TextSpan(
+          text: text,
+          style: TextStyle(
+              color: c,
+              fontSize: fontSize,
+              fontWeight: bold ? FontWeight.w700 : FontWeight.w400)),
       textDirection: TextDirection.ltr,
     )..layout();
-    tp.paint(canvas, Offset(center.dx - tp.width / 2, center.dy - tp.height / 2));
+    tp.paint(
+        canvas, Offset(center.dx - tp.width / 2, center.dy - tp.height / 2));
   }
 
   @override
@@ -1160,9 +1171,12 @@ class SagittaCalculatorDialog extends StatefulWidget {
 class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
   final _sagittaCtrl = TextEditingController();
   final _chordCtrl = TextEditingController();
+  static final List<String> _recentCalculations = <String>[];
+  String? _lastRecordedSignature;
   bool _useInches = true;
+  bool _recentExpanded = false;
 
-  double? _odIn;          // always stored in inches internally
+  double? _odIn; // always stored in inches internally
   bool _sagittaIsOD = false; // true when sagitta >= chord
   List<_NpsEntry>? _matches; // [smaller, closest, larger]
   String? _errorMsg;
@@ -1212,6 +1226,7 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
 
     if (sRaw == null || cRaw == null || sRaw <= 0 || cRaw <= 0) {
       setState(() {
+        _lastRecordedSignature = null;
         _odIn = null;
         _sagittaIsOD = false;
         _matches = null;
@@ -1232,6 +1247,7 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
     // Also guard for sagitta >= half-chord but < chord (impossible segment)
     if (!sagittaIsOD && s >= halfC) {
       setState(() {
+        _lastRecordedSignature = null;
         _odIn = null;
         _sagittaIsOD = false;
         _matches = null;
@@ -1242,9 +1258,7 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
 
     // Excel formula: OD = 2*(s^2 + (chord/2)^2) / (2*s)
     // Full-engulf: tool spans full pipe width → OD = chord
-    final od = sagittaIsOD
-        ? c
-        : 2 * (s * s + halfC * halfC) / (2 * s);
+    final od = sagittaIsOD ? c : 2 * (s * s + halfC * halfC) / (2 * s);
 
     // find closest, next-smaller, next-larger
     int closestIdx = 0;
@@ -1257,26 +1271,44 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
       }
     }
 
-    _NpsEntry? smaller =
-        closestIdx > 0 ? _npsTable[closestIdx - 1] : null;
+    _NpsEntry? smaller = closestIdx > 0 ? _npsTable[closestIdx - 1] : null;
     _NpsEntry? larger =
         closestIdx < _npsTable.length - 1 ? _npsTable[closestIdx + 1] : null;
+    final closest = _npsTable[closestIdx];
+    final unitLabel = _useInches ? 'in' : 'mm';
+    final sText = _sagittaCtrl.text.trim();
+    final cText = _chordCtrl.text.trim();
+    final signature =
+        '${_useInches ? "in" : "mm"}|$sText|$cText|${od.toStringAsFixed(6)}';
+    final summary = 'S=$sText $unitLabel, C=$cText $unitLabel '
+        '→ OD ${_fmtOdForUnit(od, _useInches)} | NPS ${closest.npsLabel}';
 
     setState(() {
+      if (_lastRecordedSignature != signature) {
+        _lastRecordedSignature = signature;
+        _recentCalculations.insert(0, summary);
+        if (_recentCalculations.length > 10) {
+          _recentCalculations.removeRange(10, _recentCalculations.length);
+        }
+      }
       _odIn = od;
       _sagittaIsOD = sagittaIsOD;
       _matches = [
         if (smaller != null) smaller,
-        _npsTable[closestIdx],
+        closest,
         if (larger != null) larger,
       ];
       _errorMsg = null;
     });
   }
 
-  String _fmtOd(double odIn) {
-    if (_useInches) return '${odIn.toStringAsFixed(3)} in';
+  String _fmtOdForUnit(double odIn, bool useInches) {
+    if (useInches) return '${odIn.toStringAsFixed(3)} in';
     return '${(odIn * 25.4).toStringAsFixed(1)} mm';
+  }
+
+  String _fmtOd(double odIn) {
+    return _fmtOdForUnit(odIn, _useInches);
   }
 
   /// Returns the decimal equivalent string when [text] is a fractional inch
@@ -1299,110 +1331,113 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
     final scheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
     final labelColor = isDark ? Colors.white70 : Colors.black87;
+    final dialogWidth = math.min(MediaQuery.sizeOf(context).width - 32, 460.0);
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 460),
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // ── Title row ──
-                Row(
-                  children: [
-                    // const Icon(CupertinoIcons.circle,
-                    //     color: Colors.grey),
-                    // const SizedBox(width: 8),
-                    Expanded(
-                      child: Text('Estimate NPS from top part of pipe',
-                          style: theme.textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.w600)),
-                    ),
-                    IconButton(
-                      visualDensity: VisualDensity.compact,
-                      icon: const Icon(Icons.close, size: 18),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                // Text(
-                //   '\n Measure only the top of the exposed pipe in the trench.',
-                //   style: theme.textTheme.bodySmall
-                //       ?.copyWith(color: Colors.grey),
-                // ),
-                // const SizedBox(height: 14),
-                Text(
-                  ' OD = 2·(s² + (c/2)²) / (2·s)',
-                 // textAlign: TextAlign.center,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                      fontStyle: FontStyle.italic, color: Colors.grey),
-                ),
-
-                // const SizedBox(height: 12),
-
-                // ── Schematic ──
-                SizedBox(
-                  height: 200,
-                  child: CustomPaint(
-                    painter: _SagittaSchemePainter(
-                        color: labelColor),
-                    size: const Size(double.infinity, 200),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      child: SizedBox(
+        width: dialogWidth,
+        height: 900,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 460, maxHeight: 900),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // ── Title row ──
+                  Row(
+                    children: [
+                      // const Icon(CupertinoIcons.circle,
+                      //     color: Colors.grey),
+                      // const SizedBox(width: 8),
+                      Expanded(
+                        child: Text('Estimate NPS from top part of pipe',
+                            style: theme.textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w600)),
+                      ),
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        icon: const Icon(Icons.close, size: 18),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 4),
+                  const SizedBox(height: 4),
+                  // Text(
+                  //   '\n Measure only the top of the exposed pipe in the trench.',
+                  //   style: theme.textTheme.bodySmall
+                  //       ?.copyWith(color: Colors.grey),
+                  // ),
+                  // const SizedBox(height: 14),
+                  Text(
+                    ' OD = 2·(s² + (c/2)²) / (2·s)',
+                    // textAlign: TextAlign.center,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                        fontStyle: FontStyle.italic, color: Colors.grey),
+                  ),
 
+                  // const SizedBox(height: 12),
 
-                // ── Unit toggle ──
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Text('Units:', style: theme.textTheme.bodySmall),
-                    const SizedBox(width: 10),
-                    ToggleButtons(
-                      isSelected: [_useInches, !_useInches],
-                      onPressed: (i) {
-                        if (i == 0 && !_useInches) _onUnitToggle(true);
-                        if (i == 1 && _useInches) _onUnitToggle(false);
-                      },
-                      borderRadius: BorderRadius.circular(8),
-                      constraints: const BoxConstraints(
-                          minWidth: 52, minHeight: 34),
-                      children: const [
-                        Text('  in  '),
-                        Text('  mm  '),
-                      ],
+                  // ── Schematic ──
+                  SizedBox(
+                    height: 200,
+                    child: CustomPaint(
+                      painter: _SagittaSchemePainter(color: labelColor),
+                      size: const Size(double.infinity, 200),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 14),
+                  ),
+                  const SizedBox(height: 4),
 
-                // ── Inputs ──
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          TextField(
-                            controller: _sagittaCtrl,
-                            keyboardType: _useInches
-                                ? TextInputType.text
-                                : const TextInputType.numberWithOptions(decimal: true),
-                            decoration: InputDecoration(
-                              labelText:
-                                  'S  [${_useInches ? "in" : "mm"}]',
-                              hintText: _useInches ? 'e.g. 1 1/4' : null,
-                              border: const OutlineInputBorder(),
-                              isDense: true,
+                  // ── Unit toggle ──
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      // Text('Units:', style: theme.textTheme.bodySmall),
+                      //   const SizedBox(width: 10),
+                      ToggleButtons(
+                        isSelected: [_useInches, !_useInches],
+                        onPressed: (i) {
+                          if (i == 0 && !_useInches) _onUnitToggle(true);
+                          if (i == 1 && _useInches) _onUnitToggle(false);
+                        },
+                        borderRadius: BorderRadius.circular(8),
+                        constraints:
+                            const BoxConstraints(minWidth: 52, minHeight: 34),
+                        children: const [
+                          Text('  in  '),
+                          Text('  mm  '),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+
+                  // ── Inputs ──
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            TextField(
+                              controller: _sagittaCtrl,
+                              keyboardType: _useInches
+                                  ? TextInputType.text
+                                  : const TextInputType.numberWithOptions(
+                                      decimal: true),
+                              decoration: InputDecoration(
+                                labelText: 'S  [${_useInches ? "in" : "mm"}]',
+                                hintText: _useInches ? 'e.g. 6/16' : null,
+                                border: const OutlineInputBorder(),
+                                isDense: true,
+                              ),
+                              onChanged: (_) => _calculate(),
                             ),
-                            onChanged: (_) => _calculate(),
-                          ),
-                          Padding(
+                            Padding(
                               padding: const EdgeInsets.only(top: 3, left: 4),
                               child: Text(
                                 _fracDecimalHint(_sagittaCtrl.text) != null
@@ -1413,29 +1448,29 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
                                 ),
                               ),
                             ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          TextField(
-                            controller: _chordCtrl,
-                            keyboardType: _useInches
-                                ? TextInputType.text
-                                : const TextInputType.numberWithOptions(decimal: true),
-                            decoration: InputDecoration(
-                              labelText:
-                                  'C [${_useInches ? "in" : "mm"}]',
-                              hintText: _useInches ? 'e.g. 6/16' : null,
-                              border: const OutlineInputBorder(),
-                              isDense: true,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            TextField(
+                              controller: _chordCtrl,
+                              keyboardType: _useInches
+                                  ? TextInputType.text
+                                  : const TextInputType.numberWithOptions(
+                                      decimal: true),
+                              decoration: InputDecoration(
+                                labelText: 'C [${_useInches ? "in" : "mm"}]',
+                                hintText: _useInches ? 'e.g 4 1/4' : null,
+                                border: const OutlineInputBorder(),
+                                isDense: true,
+                              ),
+                              onChanged: (_) => _calculate(),
                             ),
-                            onChanged: (_) => _calculate(),
-                          ),
-                          Padding(
+                            Padding(
                               padding: const EdgeInsets.only(top: 3, left: 4),
                               child: Text(
                                 _fracDecimalHint(_chordCtrl.text) != null
@@ -1446,121 +1481,158 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
                                 ),
                               ),
                             ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-
-                // ── Error ──
-                if (_errorMsg != null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Text(_errorMsg!,
-                        style: const TextStyle(
-                            color: Colors.red, fontSize: 12)),
+                    ],
                   ),
+                  // const SizedBox(height: 10),
 
-                // ── Results ──
-                if (_odIn != null && _matches != null) ...[
-                  // const Divider(),
-                  const SizedBox(height: 4),
-                  if (_sagittaIsOD)
+                  // ── Error ──
+                  if (_errorMsg != null)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.info_outline,
-                              size: 14, color: Colors.orange),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              'S ≥ C: the contour tool fully surrounded '
-                              'the pipe. S is assumed to be same as C.',
-                              style: TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.orange.shade700,
-                                  fontStyle: FontStyle.italic),
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Text(_errorMsg!,
+                          style:
+                              const TextStyle(color: Colors.red, fontSize: 12)),
+                    ),
+
+                  // ── Results ──
+                  if (_odIn != null && _matches != null) ...[
+                    // const Divider(),
+                    const SizedBox(height: 4),
+                    if (_sagittaIsOD)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.info_outline,
+                                size: 14, color: Colors.orange),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                'S ≥ C: the contour tool fully surrounded '
+                                'the pipe. S is assumed to be same as C.',
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.orange.shade700,
+                                    fontStyle: FontStyle.italic),
+                              ),
                             ),
+                          ],
+                        ),
+                      ),
+                    if (_recentCalculations.isNotEmpty) ...[
+                      //const SizedBox(height: 8),
+                      // const Divider(height: 1, color: Colors.grey),
+                      // const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Recent calculations',
+                            style: theme.textTheme.titleSmall
+                                ?.copyWith(fontWeight: FontWeight.w600),
+                          ),
+                          IconButton(
+                            iconSize: 20,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            icon: Icon(
+                              _recentExpanded
+                                  ? Icons.expand_less
+                                  : Icons.expand_more,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _recentExpanded = !_recentExpanded;
+                              });
+                            },
                           ),
                         ],
                       ),
+                      if (_recentExpanded) ...[
+                        const SizedBox(height: 6),
+                        ..._recentCalculations.map((entry) => Padding(
+                              padding: const EdgeInsets.only(bottom: 4),
+                              child: Text(
+                                entry,
+                                style: theme.textTheme.bodySmall,
+                              ),
+                            )),
+                      ],
+                    ],
+                    Center(
+                      child: Text(
+                        'Estimated OD: ${_fmtOd(_odIn!)}',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                            fontSize: 19, fontWeight: FontWeight.w600),
+                      ),
                     ),
-                  Center(
-                    child: Text(
-                      'Estimated OD: ${_fmtOd(_odIn!)}',
-
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontSize: 19,
-                          fontWeight: FontWeight.w600),
+                    Center(
+                      child: const Text('closes matches:',
+                          style: TextStyle(fontSize: 11, color: Colors.grey)),
                     ),
-                  ),
-                  Center(
-                    child: const Text('closes matches:', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                  ),
-                  ..._matches!.map((entry) {
-                    final isClosest = _matches!.indexOf(entry) ==
-                        _matches!.indexWhere((e) =>
-                            (e.odIn - _odIn!).abs() ==
-                            _matches!
-                                .map((x) => (x.odIn - _odIn!).abs())
-                                .reduce((a, b) => a < b ? a : b));
-                    final delta = entry.odIn - _odIn!;
-                    final icon = isClosest
-                        ? Icons.check_circle_outline
-                        : delta > 0
-                            ? Icons.arrow_upward
-                            : Icons.arrow_downward;
-                    final iconColor = isClosest
-                        ? Colors.green
-                        : delta > 0
-                            ? Colors.orange
-                            : Colors.blue;
-                    return Card(
-                      elevation: isClosest ? 3 : 0,
-                      color: isClosest
-                          ? scheme.primaryContainer.withValues(alpha: 0.4)
-                          : null,
-                      margin: const EdgeInsets.symmetric(vertical: 3),
-                      child: ListTile(
-                        dense: true,
-                        leading: Icon(icon, color: iconColor, size: 20),
-                        title: Text('NPS ${entry.npsLabel}',
+                    ..._matches!.map((entry) {
+                      final isClosest = _matches!.indexOf(entry) ==
+                          _matches!.indexWhere((e) =>
+                              (e.odIn - _odIn!).abs() ==
+                              _matches!
+                                  .map((x) => (x.odIn - _odIn!).abs())
+                                  .reduce((a, b) => a < b ? a : b));
+                      final delta = entry.odIn - _odIn!;
+                      final icon = isClosest
+                          ? Icons.check_circle_outline
+                          : delta > 0
+                              ? Icons.arrow_upward
+                              : Icons.arrow_downward;
+                      final iconColor = isClosest
+                          ? Colors.green
+                          : delta > 0
+                              ? Colors.orange
+                              : Colors.blue;
+                      return Card(
+                        elevation: isClosest ? 3 : 0,
+                        color: isClosest
+                            ? scheme.primaryContainer.withValues(alpha: 0.4)
+                            : null,
+                        margin: const EdgeInsets.symmetric(vertical: 3),
+                        child: ListTile(
+                          dense: true,
+                          leading: Icon(icon, color: iconColor, size: 20),
+                          title: Text('NPS ${entry.npsLabel}',
+                              style: TextStyle(
+                                  fontWeight: isClosest
+                                      ? FontWeight.w600
+                                      : FontWeight.w400)),
+                          subtitle: Text('OD: ${_fmtOd(entry.odIn)}'),
+                          trailing: Text(
+                            _fmtDelta(entry.odIn, _odIn!),
                             style: TextStyle(
-                                fontWeight: isClosest
-                                    ? FontWeight.w600
-                                    : FontWeight.w400)),
-                        subtitle: Text(
-                            'OD: ${_fmtOd(entry.odIn)}'),
-                        trailing: Text(
-                          _fmtDelta(entry.odIn, _odIn!),
-                          style: TextStyle(
-                              fontSize: 12,
-                              color: isClosest
-                                  ? Colors.green
-                                  : Colors.grey),
+                                fontSize: 12,
+                                color: isClosest ? Colors.green : Colors.grey),
+                          ),
                         ),
-                      ),
-                    );
-                  }),
+                      );
+                    }),
 
-                  // ── Live schematic ───────────────────────────────────────────────
-                  // const SizedBox(height: 12),
-                  // Text('Live schematic', style: theme.textTheme.titleSmall),
-                  // const SizedBox(height: 4),
-                  SizedBox(
-                    height: 180,
-                    child: CustomPaint(
-                      painter: _LiveSchemePainter(
-                        odIn: _odIn ?? 0,
-                        baseColor: labelColor,
+                    // ── Live schematic ───────────────────────────────────────────────
+                    // const SizedBox(height: 12),
+                    // Text('Live schematic', style: theme.textTheme.titleSmall),
+                    // const SizedBox(height: 4),
+                    SizedBox(
+                      height: 180,
+                      child: CustomPaint(
+                        painter: _LiveSchemePainter(
+                          odIn: _odIn ?? 0,
+                          baseColor: labelColor,
+                        ),
+                        size: const Size(double.infinity, 180),
                       ),
-                      size: const Size(double.infinity, 180),
                     ),
-                  ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),
@@ -1568,26 +1640,3 @@ class _SagittaCalculatorDialogState extends State<SagittaCalculatorDialog> {
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
